@@ -98,7 +98,7 @@ def build_home_view(
             on_click=lambda _: on_select_anime(release.anime_session),
             on_hover=lambda e: on_hover_card(e, card_container, img),
         )
-        card_container.tab_index = idx + 1
+        card_container.tab_index = idx + 3
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)
         card_container.on_blur = lambda e: _on_blur_card(e, card_container)
 
@@ -170,7 +170,8 @@ def build_home_view(
             ink=True,
             on_click=on_prev_page if state.latest_page > 1 else None,
         )
-        prev_btn.tab_index = 0
+        num_cards = len(state.latest_releases)
+        prev_btn.tab_index = num_cards + 3
         prev_btn.on_focus = lambda e: _style_focusable(e.control, True)
         prev_btn.on_blur = lambda e: _style_focusable(e.control, False)
 
@@ -188,7 +189,7 @@ def build_home_view(
             ink=True,
             on_click=on_next_page if state.latest_has_more else None,
         )
-        next_btn.tab_index = 0
+        next_btn.tab_index = num_cards + 4
         next_btn.on_focus = lambda e: _style_focusable(e.control, True)
         next_btn.on_blur = lambda e: _style_focusable(e.control, False)
 
@@ -248,7 +249,7 @@ def build_home_view(
         ink=True,
         on_click=lambda _: on_search_click(),
     )
-    search_btn.tab_index = 0
+    search_btn.tab_index = 1
     search_btn.on_focus = _on_focus_btn
     search_btn.on_blur = _on_blur_btn
 
@@ -262,7 +263,7 @@ def build_home_view(
         ink=True,
         on_click=handle_theme_toggle,
     )
-    theme_btn.tab_index = 0
+    theme_btn.tab_index = 2
     theme_btn.on_focus = _on_focus_btn
     theme_btn.on_blur = _on_blur_btn
 

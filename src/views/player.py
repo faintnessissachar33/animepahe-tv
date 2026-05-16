@@ -82,7 +82,7 @@ def build_player_view(
             tooltip="Back",
         ),
     )
-    back_btn.tab_index = 0
+    back_btn.tab_index = 1
     back_btn.on_focus = _on_focus_btn
     back_btn.on_blur = _on_blur_btn
 

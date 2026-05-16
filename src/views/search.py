@@ -211,7 +211,7 @@ def build_search_view(
         ink=True,
         on_click=lambda _: on_back(),
     )
-    back_btn.tab_index = 0
+    back_btn.tab_index = 1
     back_btn.on_focus = _on_focus_btn
     back_btn.on_blur = _on_blur_btn
 

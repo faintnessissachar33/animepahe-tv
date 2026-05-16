@@ -206,7 +206,7 @@ def build_anime_detail_view(
             key=f"ep_card_{idx}",
             on_click=lambda _, a=anime_session, es=ep.session: page_obj.run_task(on_play, a, es),
         )
-        card_container.tab_index = 0
+        card_container.tab_index = idx + 2
         card_container.on_focus = lambda e: _on_focus_ep(e, card_container)
         card_container.on_blur = lambda e: _on_blur_ep(e, card_container)
         return card_container
@@ -234,7 +234,8 @@ def build_anime_detail_view(
             ink=True,
             on_click=on_prev_ep_page if state.episodes_page > 1 else None,
         )
-        prev_btn.tab_index = 0
+        num_eps = len(state.episodes)
+        prev_btn.tab_index = num_eps + 2
         prev_btn.on_focus = lambda e: _style_focusable(e.control, True)
         prev_btn.on_blur = lambda e: _style_focusable(e.control, False)
 
@@ -252,7 +253,7 @@ def build_anime_detail_view(
             ink=True,
             on_click=on_next_ep_page if state.episodes_has_more else None,
         )
-        next_btn.tab_index = 0
+        next_btn.tab_index = num_eps + 3
         next_btn.on_focus = lambda e: _style_focusable(e.control, True)
         next_btn.on_blur = lambda e: _style_focusable(e.control, False)
 
@@ -307,7 +308,7 @@ def build_anime_detail_view(
         ink=True,
         on_click=on_back,
     )
-    back_btn.tab_index = 0
+    back_btn.tab_index = 1
     back_btn.on_focus = _on_focus_btn
     back_btn.on_blur = _on_blur_btn
 
