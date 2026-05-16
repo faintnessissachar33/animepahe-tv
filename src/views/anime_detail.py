@@ -9,13 +9,10 @@ def build_anime_detail_view(
     on_load_episodes: callable,
     on_play: callable,
 ) -> ft.View:
-    # Try to find anime in search results or latest releases
     anime = next((a for a in state.search_results if a.session == anime_session), None)
     if not anime:
-        # Fallback to latest_releases if we navigated from Home
         lr = next((a for a in state.latest_releases if a.anime_session == anime_session), None)
         if lr:
-            # Create a mock anime object from latest release
             from core.state import Anime
             anime = Anime(
                 id=lr.anime_id,
@@ -26,7 +23,7 @@ def build_anime_detail_view(
                 season="",
                 year=0,
                 score=0.0,
-                poster=lr.snapshot, # Use snapshot as poster fallback
+                poster=lr.snapshot,
                 session=lr.anime_session,
             )
 
@@ -35,7 +32,6 @@ def build_anime_detail_view(
             page_obj.views.pop()
             page_obj.update()
 
-    # Blurred background
     bg_image_url = anime.poster if anime and anime.poster else ""
 
     bg_container = ft.Stack(
@@ -87,7 +83,7 @@ def build_anime_detail_view(
         info_text.value = " \u2022 ".join(parts)
 
     episode_grid = ft.GridView(
-        expand=True,
+        expand=False,
         runs_count=3,
         max_extent=250,
         child_aspect_ratio=1.6,
@@ -101,21 +97,51 @@ def build_anime_detail_view(
         visible=False,
     )
 
-    def on_hover_ep(e, container, icon):
-        if e.data == "true":
-            container.bgcolor = ft.Colors.with_opacity(0.2, AppColors.PRIMARY)
-            container.scale = 1.02
-            icon.color = AppColors.PRIMARY
-        else:
-            container.bgcolor = AppColors.get_glass_bg(page_obj)
-            container.scale = 1.0
-            icon.color = ft.Colors.WHITE
-        container.update()
-        icon.update()
+    def _on_focus_ep(e, ctrl):
+        ctrl.scale = 1.02
+        ctrl.bgcolor = ft.Colors.with_opacity(0.2, AppColors.PRIMARY)
+        try:
+            ctrl.update()
+        except Exception:
+            pass
 
-    def _build_episode_card(ep) -> ft.Container:
+    def _on_blur_ep(e, ctrl):
+        ctrl.scale = 1.0
+        ctrl.bgcolor = AppColors.get_glass_bg(page_obj)
+        try:
+            ctrl.update()
+        except Exception:
+            pass
+
+    def _style_focusable(control, focused):
+        if focused:
+            control.bgcolor = ft.Colors.with_opacity(0.1, AppColors.PRIMARY)
+            control.border = ft.Border.all(2, AppColors.PRIMARY)
+        else:
+            control.bgcolor = None
+            control.border = ft.Border.all(1.5, AppColors.PRIMARY)
+        try:
+            control.update()
+        except Exception:
+            pass
+
+    def _on_focus_btn(e):
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, AppColors.PRIMARY)
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
+    def _on_blur_btn(e):
+        e.control.bgcolor = None
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
+    def _build_episode_card(ep, idx: int) -> ft.Container:
         play_icon = ft.Icon(ft.Icons.PLAY_CIRCLE_FILL_ROUNDED, size=40, color=ft.Colors.WHITE)
-        
+
         img = ft.Image(
             src=ep.snapshot if ep.snapshot else "",
             fit="cover",
@@ -176,9 +202,13 @@ def build_anime_detail_view(
             bgcolor=AppColors.get_glass_bg(page_obj),
             animate_scale=300,
             animate=300,
+            ink=True,
+            key=f"ep_card_{idx}",
             on_click=lambda _, a=anime_session, es=ep.session: page_obj.run_task(on_play, a, es),
-            on_hover=lambda e: on_hover_ep(e, card_container, play_icon),
         )
+        card_container.tab_index = 0
+        card_container.on_focus = lambda e: _on_focus_ep(e, card_container)
+        card_container.on_blur = lambda e: _on_blur_ep(e, card_container)
         return card_container
 
     def refresh_episodes():
@@ -187,9 +217,64 @@ def build_anime_detail_view(
             loading_indicator.visible = True
         else:
             loading_indicator.visible = False
-            for ep in state.episodes:
-                episode_grid.controls.append(_build_episode_card(ep))
+            for i, ep in enumerate(state.episodes):
+                episode_grid.controls.append(_build_episode_card(ep, i))
+
+        prev_btn = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Icon(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, color=ft.Colors.ON_SURFACE if state.episodes_page > 1 else ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Text("Previous", color=ft.Colors.ON_SURFACE if state.episodes_page > 1 else ft.Colors.ON_SURFACE_VARIANT),
+                ],
+                spacing=8,
+            ),
+            padding=ft.Padding(15, 10, 15, 10),
+            border_radius=10,
+            border=ft.Border.all(1.5, AppColors.PRIMARY),
+            ink=True,
+            on_click=on_prev_ep_page if state.episodes_page > 1 else None,
+        )
+        prev_btn.tab_index = 0
+        prev_btn.on_focus = lambda e: _style_focusable(e.control, True)
+        prev_btn.on_blur = lambda e: _style_focusable(e.control, False)
+
+        next_btn = ft.Container(
+            content=ft.Row(
+                [
+                    ft.Text("Next", color=ft.Colors.ON_SURFACE if state.episodes_has_more else ft.Colors.ON_SURFACE_VARIANT),
+                    ft.Icon(ft.Icons.ARROW_FORWARD_IOS_ROUNDED, color=ft.Colors.ON_SURFACE if state.episodes_has_more else ft.Colors.ON_SURFACE_VARIANT),
+                ],
+                spacing=8,
+            ),
+            padding=ft.Padding(15, 10, 15, 10),
+            border_radius=10,
+            border=ft.Border.all(1.5, AppColors.PRIMARY),
+            ink=True,
+            on_click=on_next_ep_page if state.episodes_has_more else None,
+        )
+        next_btn.tab_index = 0
+        next_btn.on_focus = lambda e: _style_focusable(e.control, True)
+        next_btn.on_blur = lambda e: _style_focusable(e.control, False)
+
+        ep_nav = ft.Row(
+            controls=[prev_btn, ft.Text(f"Page {state.episodes_page}", color=ft.Colors.ON_SURFACE, weight=ft.FontWeight.W_500), next_btn],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=16,
+        )
+
+        episodes_section.controls = [episodes_header, episode_grid, ep_nav, loading_indicator]
         page_obj.update()
+
+    def on_next_ep_page(e):
+        state.is_loading = True
+        state.episodes_page += 1
+        page_obj.run_task(on_load_episodes, anime_session, state.episodes_page)
+
+    def on_prev_ep_page(e):
+        if state.episodes_page > 1:
+            state.is_loading = True
+            state.episodes_page -= 1
+            page_obj.run_task(on_load_episodes, anime_session, state.episodes_page)
 
     page_obj.refresh_episodes = refresh_episodes
 
@@ -215,6 +300,17 @@ def build_anime_detail_view(
         ),
     )
 
+    back_btn = ft.Container(
+        content=ft.Icon(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, color=ft.Colors.ON_SURFACE),
+        padding=10,
+        border_radius=10,
+        ink=True,
+        on_click=on_back,
+    )
+    back_btn.tab_index = 0
+    back_btn.on_focus = _on_focus_btn
+    back_btn.on_blur = _on_blur_btn
+
     header = ft.Container(
         padding=ft.Padding.all(32),
         content=ft.Row(
@@ -224,12 +320,7 @@ def build_anime_detail_view(
                 ft.Column(
                     expand=True,
                     controls=[
-                        ft.IconButton(
-                            icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
-                            icon_color=ft.Colors.ON_SURFACE,
-                            on_click=on_back,
-                            tooltip="Back",
-                        ),
+                        back_btn,
                         ft.Container(height=16),
                         title_text,
                         ft.Container(height=8),
@@ -242,31 +333,45 @@ def build_anime_detail_view(
         ),
     )
 
+    episodes_header = ft.Container(
+        padding=ft.Padding.only(left=32, right=32, bottom=16),
+        content=ft.Text(
+            "Episodes",
+            size=24,
+            weight=ft.FontWeight.BOLD,
+            color=ft.Colors.ON_SURFACE,
+        ),
+    )
+
+    episodes_section = ft.Container(
+        expand=False,
+        padding=ft.Padding.only(left=32, right=32, bottom=32),
+        content=ft.Column([episode_grid, loading_indicator], spacing=16),
+    )
+
+    scroll_content = ft.Column(
+        [
+            header,
+            episodes_header,
+            episodes_section,
+        ],
+        spacing=0,
+        expand=False,
+    )
+
+    scrollable = ft.ListView(
+        expand=True,
+        controls=[scroll_content],
+        padding=0,
+        spacing=0,
+        auto_scroll=True,
+    )
+
     content = ft.Stack(
         [
             bg_container,
             bg_overlay,
-            ft.Column(
-                [
-                    header,
-                    ft.Container(
-                        padding=ft.Padding.only(left=32, right=32, bottom=16),
-                        content=ft.Text(
-                            "Episodes",
-                            size=24,
-                            weight=ft.FontWeight.BOLD,
-                            color=ft.Colors.ON_SURFACE,
-                        ),
-                    ),
-                    ft.Container(
-                        expand=True,
-                        padding=ft.Padding.only(left=32, right=32, bottom=32),
-                        content=ft.Stack([episode_grid, loading_indicator]),
-                    ),
-                ],
-                spacing=0,
-                expand=True,
-            ),
+            scrollable,
         ],
         expand=True,
     )

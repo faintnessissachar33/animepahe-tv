@@ -12,7 +12,7 @@ def build_player_view(
     scraper,
 ) -> ft.View:
     kwik = KwikResolver()
-    
+
     video = fv.Video(
         autoplay=True,
         expand=True,
@@ -36,11 +36,9 @@ def build_player_view(
 
     loading = ft.ProgressRing(width=40, height=40, stroke_width=4, color=AppColors.PRIMARY)
 
-    # Premium glassmorphic loading overlay
     overlay = ft.Container(
         expand=True,
         bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
-        blur=ft.Blur(20, 20, "mirror"),
         alignment=ft.Alignment.CENTER,
         content=ft.Column(
             [
@@ -58,6 +56,20 @@ def build_player_view(
             page_obj.views.pop()
             page_obj.update()
 
+    def _on_focus_btn(e):
+        e.control.bgcolor = ft.Colors.with_opacity(0.5, ft.Colors.BLACK)
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
+    def _on_blur_btn(e):
+        e.control.bgcolor = ft.Colors.with_opacity(0.3, ft.Colors.BLACK)
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
     back_btn = ft.Container(
         left=24,
         top=40,
@@ -69,9 +81,12 @@ def build_player_view(
             on_click=on_back,
             tooltip="Back",
         ),
+        focusable=True,
+        tab_index=0,
+        on_focus=_on_focus_btn,
+        on_blur=_on_blur_btn,
     )
 
-    # Resolve sources
     def resolve_and_play():
         try:
             sources = scraper.sources(anime_session, episode_session)
@@ -95,7 +110,7 @@ def build_player_view(
             page_obj.update()
 
     view = ft.View(
-        route=f"/play?src={anime_session}|{episode_session}",
+        route="/play",
         controls=[
             ft.Stack(
                 [
@@ -110,7 +125,6 @@ def build_player_view(
         padding=0,
     )
 
-    # Run resolution async so it doesn't block the UI rendering
     page_obj.run_task(resolve_and_play)
 
     return view

@@ -9,6 +9,7 @@ def build_search_view(
     on_select_anime: callable,
     on_back: callable,
 ) -> ft.View:
+
     search_field = ft.TextField(
         hint_text="Search for anime...",
         color=ft.Colors.ON_SURFACE,
@@ -24,7 +25,7 @@ def build_search_view(
     )
 
     results_grid = ft.GridView(
-        expand=True,
+        expand=False,
         runs_count=4,
         max_extent=180,
         child_aspect_ratio=0.6,
@@ -32,21 +33,54 @@ def build_search_view(
         run_spacing=16,
     )
 
-    def on_hover_card(e, container, image):
-        if e.data == "true":
-            container.scale = 1.05
-            container.shadow = ft.BoxShadow(
-                spread_radius=2,
-                blur_radius=15,
-                color=ft.Colors.with_opacity(0.3, AppColors.PRIMARY),
-                offset=ft.Offset(0, 8),
-            )
-        else:
-            container.scale = 1.0
-            container.shadow = None
-        container.update()
+    def _on_focus_card(e, ctrl):
+        ctrl.scale = 1.05
+        ctrl.shadow = ft.BoxShadow(
+            spread_radius=2,
+            blur_radius=15,
+            color=ft.Colors.with_opacity(0.3, AppColors.PRIMARY),
+            offset=ft.Offset(0, 8),
+        )
+        try:
+            ctrl.update()
+        except Exception:
+            pass
 
-    def _build_card(anime) -> ft.Container:
+    def _on_blur_card(e, ctrl):
+        ctrl.scale = 1.0
+        ctrl.shadow = None
+        try:
+            ctrl.update()
+        except Exception:
+            pass
+
+    def _style_focusable(control, focused):
+        if focused:
+            control.bgcolor = ft.Colors.with_opacity(0.1, AppColors.PRIMARY)
+            control.border = ft.Border.all(2, AppColors.PRIMARY)
+        else:
+            control.bgcolor = None
+            control.border = ft.Border.all(1.5, AppColors.PRIMARY)
+        try:
+            control.update()
+        except Exception:
+            pass
+
+    def _on_focus_btn(e):
+        e.control.bgcolor = ft.Colors.with_opacity(0.1, AppColors.PRIMARY)
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
+    def _on_blur_btn(e):
+        e.control.bgcolor = None
+        try:
+            e.control.update()
+        except Exception:
+            pass
+
+    def _build_card(anime, idx: int) -> ft.Container:
         img = ft.Image(
             src=anime.poster if anime.poster else "",
             fit="cover",
@@ -86,7 +120,7 @@ def build_search_view(
             size=12,
             color=ft.Colors.WHITE_70,
         )
-        
+
         type_text = ft.Text(
             anime.type,
             size=12,
@@ -126,9 +160,13 @@ def build_search_view(
             clip_behavior="antiAlias",
             animate_scale=300,
             animate=300,
+            ink=True,
+            key=f"search_card_{idx}",
             on_click=lambda _: on_select_anime(anime),
-            on_hover=lambda e: on_hover_card(e, card_container, img),
         )
+        card_container.tab_index = 0
+        card_container.on_focus = lambda e: _on_focus_card(e, card_container)
+        card_container.on_blur = lambda e: _on_blur_card(e, card_container)
         return card_container
 
     def refresh_results():
@@ -143,8 +181,8 @@ def build_search_view(
         else:
             loading_indicator.visible = False
             empty_state.visible = False
-            for anime in state.search_results:
-                results_grid.controls.append(_build_card(anime))
+            for i, anime in enumerate(state.search_results):
+                results_grid.controls.append(_build_card(anime, i))
         page_obj.update()
 
     page_obj.refresh_search_results = refresh_results
@@ -166,18 +204,24 @@ def build_search_view(
         expand=True,
     )
 
+    back_btn = ft.Container(
+        content=ft.Icon(ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED, color=ft.Colors.ON_SURFACE),
+        padding=10,
+        border_radius=10,
+        ink=True,
+        on_click=lambda _: on_back(),
+    )
+    back_btn.tab_index = 0
+    back_btn.on_focus = _on_focus_btn
+    back_btn.on_blur = _on_blur_btn
+
     header = ft.Container(
         padding=ft.Padding.only(left=24, right=24, top=24, bottom=16),
         content=ft.Column(
             [
                 ft.Row(
                     [
-                        ft.IconButton(
-                            icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
-                            icon_color=ft.Colors.ON_SURFACE,
-                            on_click=lambda _: on_back(),
-                            tooltip="Back",
-                        ),
+                        back_btn,
                         ft.Container(
                             width=36,
                             height=36,
@@ -201,7 +245,7 @@ def build_search_view(
         )
     )
 
-    content = ft.Column(
+    scroll_content = ft.Column(
         [
             header,
             ft.Container(
@@ -211,17 +255,32 @@ def build_search_view(
             ),
         ],
         spacing=0,
+        expand=False,
+    )
+
+    scrollable = ft.ListView(
         expand=True,
+        controls=[scroll_content],
+        padding=0,
+        spacing=0,
+        auto_scroll=True,
     )
 
     view = ft.View(
         route="/search",
-        controls=[content],
+        controls=[
+            ft.SafeArea(
+                ft.Container(
+                    content=scrollable,
+                    expand=True,
+                    bgcolor=ft.Colors.SURFACE,
+                ),
+                expand=True,
+            )
+        ],
         padding=0,
-        bgcolor=ft.Colors.SURFACE,
     )
 
-    # Initial load trigger
     refresh_results()
 
     return view
