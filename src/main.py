@@ -38,7 +38,7 @@ async def main(page: ft.Page):
     page.dark_theme = AppTheme.get_dark_theme()
     page.theme.font_family = "Outfit"
     page.dark_theme.font_family = "Outfit"
-    page.theme_mode = ft.ThemeMode.DARK
+    page.theme_mode = ft.ThemeMode.SYSTEM
 
     scraper = AnimePaheScraper()
     cache = Cache()
@@ -51,14 +51,16 @@ async def main(page: ft.Page):
     async def navigate(route: str):
         await page.push_route(route)
 
-    async def load_latest():
+    async def load_latest(page_num: int = 1):
         state.is_loading = True
+        state.latest_page = page_num
         if hasattr(page, "update_home_grid"):
             page.update_home_grid()
         page.update()
 
-        results, has_more = scraper.latest_releases(1)
+        results, has_more = scraper.latest_releases(page_num)
         state.latest_releases = results
+        state.latest_has_more = has_more
         state.is_loading = False
         if hasattr(page, "update_home_grid"):
             page.update_home_grid()

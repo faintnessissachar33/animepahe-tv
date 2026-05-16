@@ -37,18 +37,24 @@ def build_anime_detail_view(
 
     # Blurred background
     bg_image_url = anime.poster if anime and anime.poster else ""
-    
-    bg_container = ft.Container(
+
+    bg_container = ft.Stack(
         expand=True,
-        image_src=bg_image_url,
-        image_fit="cover",
-        blur=ft.Blur(10, 10, "mirror"),
+        controls=[
+            ft.Image(
+                src=bg_image_url,
+                fit="cover",
+                expand=True,
+                opacity=0.3,
+            ),
+            ft.Container(
+                expand=True,
+                bgcolor=ft.Colors.with_opacity(0.85, ft.Colors.SURFACE),
+            ),
+        ],
     )
 
-    bg_overlay = ft.Container(
-        expand=True,
-        bgcolor=ft.Colors.with_opacity(0.85, ft.Colors.SURFACE),
-    )
+    bg_overlay = ft.Container(expand=True, bgcolor=ft.Colors.TRANSPARENT)
 
     title_text = ft.Text(
         anime.title if anime else "Loading...",
@@ -68,11 +74,16 @@ def build_anime_detail_view(
 
     if anime:
         parts = []
-        if anime.year: parts.append(str(anime.year))
-        if anime.type: parts.append(anime.type)
-        if anime.status: parts.append(anime.status)
-        if anime.episodes: parts.append(f"{anime.episodes} Episodes")
-        if anime.score: parts.append(f"★ {anime.score:.1f}")
+        if anime.year:
+            parts.append(str(anime.year))
+        if anime.type:
+            parts.append(anime.type)
+        if anime.status:
+            parts.append(anime.status)
+        if anime.episodes:
+            parts.append(f"{anime.episodes} Episodes")
+        if anime.score:
+            parts.append(f"\u2605 {anime.score:.1f}")
         info_text.value = " \u2022 ".join(parts)
 
     episode_grid = ft.GridView(
@@ -132,7 +143,7 @@ def build_anime_detail_view(
 
         duration_text = ft.Text(
             ep.duration if ep.duration else "24m",
-            color=ft.Colors.WHITE70,
+            color=ft.Colors.WHITE_70,
             size=12,
         )
 
@@ -163,8 +174,8 @@ def build_anime_detail_view(
             border_radius=12,
             clip_behavior="antiAlias",
             bgcolor=AppColors.get_glass_bg(page_obj),
-            animate_scale=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
-            animate=ft.Animation(200, ft.AnimationCurve.EASE_OUT),
+            animate_scale=300,
+            animate=300,
             on_click=lambda _, a=anime_session, es=ep.session: page_obj.run_task(on_play, a, es),
             on_hover=lambda e: on_hover_ep(e, card_container, play_icon),
         )

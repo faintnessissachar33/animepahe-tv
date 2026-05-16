@@ -89,7 +89,7 @@ def build_player_view(
                 status_text.value = "No sources found"
                 loading.visible = False
             page_obj.update()
-        except Exception as e:
+        except Exception:
             status_text.value = "An error occurred while resolving"
             loading.visible = False
             page_obj.update()

@@ -54,6 +54,8 @@ class AppState:
     search_query: str = ""
     search_results: list[Anime] = []
     latest_releases: list[LatestRelease] = []
+    latest_page: int = 1
+    latest_has_more: bool = True
     search_has_more: bool = True
     episodes: list[Episode] = []
     episodes_has_more: bool = True

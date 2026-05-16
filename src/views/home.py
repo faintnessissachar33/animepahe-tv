@@ -7,7 +7,8 @@ def build_home_view(
     page_obj: ft.Page,
     on_load_latest,
     on_select_anime,
-    on_search_click
+    on_search_click,
+    on_page_change: callable = None,
 ) -> ft.View:
 
     latest_grid = ft.GridView(
@@ -35,16 +36,12 @@ def build_home_view(
         container.update()
 
     def build_card(release: LatestRelease):
-        # We don't have the anime ID directly as a session sometimes, 
-        # but the state allows navigating by anime_session.
-        # Latest releases usually have an anime_session.
-        
         img = ft.Image(
             src=release.snapshot,
             fit="cover",
             expand=True,
         )
-        
+
         gradient = ft.Container(
             gradient=ft.LinearGradient(
                 begin=ft.Alignment.TOP_CENTER,
@@ -94,23 +91,72 @@ def build_home_view(
             content=content,
             border_radius=12,
             clip_behavior="antiAlias",
-            animate_scale=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
-            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
+            animate_scale=300,
+            animate=300,
             on_click=lambda _: on_select_anime(release.anime_session),
             on_hover=lambda e: on_hover_card(e, card_container, img),
         )
 
         return card_container
 
+    def load_page(page_num: int):
+        state.is_loading = True
+        state.latest_page = page_num
+        update_grid()
+        page_obj.update()
+        page_obj.run_task(on_load_latest, page_num)
+
+    def on_next_page(e):
+        load_page(state.latest_page + 1)
+
+    def on_prev_page(e):
+        if state.latest_page > 1:
+            load_page(state.latest_page - 1)
+
     def update_grid():
         latest_grid.controls.clear()
         for r in state.latest_releases:
             latest_grid.controls.append(build_card(r))
-        
+
+        nav_row = ft.Row(
+            controls=[
+                ft.IconButton(
+                    icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
+                    icon_color=ft.Colors.ON_SURFACE if state.latest_page > 1 else ft.Colors.ON_SURFACE_VARIANT,
+                    on_click=on_prev_page if state.latest_page > 1 else None,
+                    tooltip="Previous Page",
+                ),
+                ft.Text(
+                    f"Page {state.latest_page}",
+                    color=ft.Colors.ON_SURFACE,
+                    weight=ft.FontWeight.W_500,
+                ),
+                ft.IconButton(
+                    icon=ft.Icons.ARROW_FORWARD_IOS_ROUNDED,
+                    icon_color=ft.Colors.ON_SURFACE if state.latest_has_more else ft.Colors.ON_SURFACE_VARIANT,
+                    on_click=on_next_page if state.latest_has_more else None,
+                    tooltip="Next Page",
+                ),
+            ],
+            alignment=ft.MainAxisAlignment.CENTER,
+            spacing=16,
+        )
+
+        section_header = ft.Container(
+            padding=ft.Padding.only(left=24, right=24, top=8, bottom=0),
+            content=ft.Text(
+                "Recent Episodes",
+                size=20,
+                weight=ft.FontWeight.BOLD,
+                color=ft.Colors.ON_SURFACE,
+            ),
+        )
+
         # Check if loading
         if state.is_loading and not state.latest_releases:
             content.controls = [
                 header,
+                section_header,
                 ft.Container(
                     expand=True,
                     alignment=ft.Alignment.CENTER,
@@ -118,8 +164,8 @@ def build_home_view(
                 )
             ]
         else:
-            content.controls = [header, latest_grid]
-        
+            content.controls = [header, section_header, latest_grid, nav_row]
+
         page_obj.update()
 
     def handle_theme_toggle(e):

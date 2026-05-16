@@ -84,13 +84,13 @@ def build_search_view(
         year_text = ft.Text(
             str(anime.year) if anime.year else "",
             size=12,
-            color=ft.Colors.WHITE70,
+            color=ft.Colors.WHITE_70,
         )
         
         type_text = ft.Text(
             anime.type,
             size=12,
-            color=ft.Colors.WHITE70,
+            color=ft.Colors.WHITE_70,
         )
 
         score_text = ft.Text(
@@ -124,8 +124,8 @@ def build_search_view(
             content=content,
             border_radius=12,
             clip_behavior="antiAlias",
-            animate_scale=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
-            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
+            animate_scale=300,
+            animate=300,
             on_click=lambda _: on_select_anime(anime),
             on_hover=lambda e: on_hover_card(e, card_container, img),
         )
@@ -182,7 +182,6 @@ def build_search_view(
                             width=36,
                             height=36,
                             border_radius=10,
-                            bgcolor=AppColors.PRIMARY,
                             alignment=ft.Alignment.CENTER,
                             content=ft.Image(
                                 src="icon.png",
