@@ -16,7 +16,7 @@ from views.player import build_player_view
 
 async def main(page: ft.Page):
     page.title = "AnimePahe TV"
-    page.favicon = ""
+    page.favicon = "icon.png"
     page.padding = 0
     page.spacing = 0
 
