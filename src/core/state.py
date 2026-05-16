@@ -38,11 +38,22 @@ class Source:
     fansub: str
 
 
+@dataclass
+class LatestRelease:
+    anime_id: int
+    anime_title: str
+    anime_session: str
+    episode: int
+    snapshot: str
+    session: str
+    created_at: str
+
 @ft.observable
 class AppState:
     is_loading: bool = False
     search_query: str = ""
     search_results: list[Anime] = []
+    latest_releases: list[LatestRelease] = []
     search_has_more: bool = True
     episodes: list[Episode] = []
     episodes_has_more: bool = True

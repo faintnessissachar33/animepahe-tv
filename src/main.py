@@ -9,6 +9,7 @@ from core.focus_manager import FocusManager
 from services.animepahe import AnimePaheScraper
 from services.cache import Cache
 from views.splash import build_splash_view
+from views.home import build_home_view
 from views.search import build_search_view
 from views.anime_detail import build_anime_detail_view
 from views.player import build_player_view
@@ -16,7 +17,7 @@ from views.player import build_player_view
 
 async def main(page: ft.Page):
     page.title = "AnimePahe TV"
-    page.favicon = "icon.png"
+    # Remove favicon since user mentioned red button. Actually they said "use icon.png completely", so we set it properly if in assets.
     page.padding = 0
     page.spacing = 0
 
@@ -33,10 +34,11 @@ async def main(page: ft.Page):
     page.fonts = {
         "Outfit": "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap"
     }
-    page.theme = AppTheme.get_dark_theme()
+    page.theme = AppTheme.get_light_theme()
+    page.dark_theme = AppTheme.get_dark_theme()
     page.theme.font_family = "Outfit"
+    page.dark_theme.font_family = "Outfit"
     page.theme_mode = ft.ThemeMode.DARK
-    page.bgcolor = AppColors.DARK_BG
 
     scraper = AnimePaheScraper()
     cache = Cache()
@@ -49,25 +51,46 @@ async def main(page: ft.Page):
     async def navigate(route: str):
         await page.push_route(route)
 
+    async def load_latest():
+        state.is_loading = True
+        if hasattr(page, "update_home_grid"):
+            page.update_home_grid()
+        page.update()
+
+        results, has_more = scraper.latest_releases(1)
+        state.latest_releases = results
+        state.is_loading = False
+        if hasattr(page, "update_home_grid"):
+            page.update_home_grid()
+        page.update()
+
     async def load_search(query: str):
         state.is_loading = True
         state.search_query = query
+        if hasattr(page, "refresh_search_results"):
+            page.refresh_search_results()
         page.update()
 
         results, has_more = scraper.search(query, 1)
         state.search_results = results
         state.search_has_more = has_more
         state.is_loading = False
+        if hasattr(page, "refresh_search_results"):
+            page.refresh_search_results()
         page.update()
 
     async def load_episodes(anime_session: str):
         state.is_loading = True
+        if hasattr(page, "refresh_episodes"):
+            page.refresh_episodes()
         page.update()
 
         episodes, has_more = scraper.episodes(anime_session, 1)
         state.episodes = episodes
         state.episodes_has_more = has_more
         state.is_loading = False
+        if hasattr(page, "refresh_episodes"):
+            page.refresh_episodes()
         page.update()
 
     async def play_episode(anime_session: str, episode_session: str):
@@ -92,27 +115,36 @@ async def main(page: ft.Page):
 
     async def splash_complete():
         await asyncio.sleep(1.5)
-        await navigate("/search")
+        await navigate("/home")
 
     async def route_change(e: ft.RouteChangeEvent | None = None):
         route = page.route
         parsed = urllib.parse.urlparse(route)
 
-        if parsed.path in ["/", "/search"]:
+        if parsed.path in ["/", "/home", "/search"]:
             page.views.clear()
 
         if parsed.path == "/":
             page.views.append(build_splash_view())
             page.run_task(splash_complete)
 
+        elif parsed.path == "/home":
+            page.views.append(
+                build_home_view(
+                    page_obj=page,
+                    on_load_latest=load_latest,
+                    on_select_anime=lambda a: page.run_task(navigate, f"/anime?session={a}"),
+                    on_search_click=lambda: page.run_task(navigate, "/search"),
+                )
+            )
+
         elif parsed.path == "/search":
             page.views.append(
                 build_search_view(
                     page_obj=page,
                     on_search=load_search,
-                    on_select_anime=lambda a: page.run_task(
-                        lambda: navigate(f"/anime?session={a.session}")
-                    ),
+                    on_select_anime=lambda a: page.run_task(navigate, f"/anime?session={a.session}"),
+                    on_back=lambda: page.run_task(navigate, "/home"),
                 )
             )
 
@@ -163,4 +195,4 @@ async def main(page: ft.Page):
 
 
 if __name__ == "__main__":
-    ft.run(main)
+    ft.run(main, assets_dir="assets")

@@ -2,25 +2,46 @@ import flet as ft
 
 
 class AppColors:
-    PRIMARY = "#E94560"
-    SECONDARY = "#7C4DFF"
-    SUCCESS = "#2ECC71"
-    WARNING = "#F39C12"
-    ERROR = "#F44336"
+    # Animepahe-TV custom premium palette
+    PRIMARY = "#F43F5E"  # Rose 500
+    SECONDARY = "#0EA5E9"  # Sky 500
+    SUCCESS = "#10B981"  # Emerald 500
+    WARNING = "#F59E0B"  # Amber 500
+    ERROR = "#EF4444"  # Red 500
 
-    DARK_BG = "#0D0D0D"
-    DARK_SURFACE = "#1A1A2E"
-    DARK_SURFACE_VARIANT = "#16213E"
-    DARK_TEXT = "#FFFFFF"
-    DARK_TEXT_DIM = "#A0A0B0"
-    DARK_TEXT_MUTED = "#6B6B7B"
+    # Dark Mode
+    DARK_BG = "#0B0F19"
+    DARK_SURFACE = "#111827"
+    DARK_SURFACE_VARIANT = "#1F2937"
+    DARK_TEXT = "#F9FAFB"
+    DARK_TEXT_DIM = "#9CA3AF"
+    DARK_TEXT_MUTED = "#6B7280"
 
-    SPLASH_BG = "#0D0D0D"
+    # Light Mode
+    LIGHT_BG = "#F8FAFC"
+    LIGHT_SURFACE = "#FFFFFF"
+    LIGHT_SURFACE_VARIANT = "#F1F5F9"
+    LIGHT_TEXT = "#0F172A"
+    LIGHT_TEXT_DIM = "#64748B"
+    LIGHT_TEXT_MUTED = "#94A3B8"
+
+    SPLASH_BG = "#0B0F19"
 
     WHITE = ft.Colors.WHITE
     BLACK = ft.Colors.BLACK
     TRANSPARENT = ft.Colors.TRANSPARENT
-    GREY_DIM = "#888888"
+
+    @staticmethod
+    def get_glass_bg(page: ft.Page):
+        return ft.Colors.with_opacity(
+            0.05, ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK
+        )
+    
+    @staticmethod
+    def get_hover_bg(page: ft.Page):
+        return ft.Colors.with_opacity(
+            0.1, ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK
+        )
 
 
 class AppTheme:
@@ -35,8 +56,27 @@ class AppTheme:
                 on_surface_variant=AppColors.DARK_TEXT_DIM,
                 error=AppColors.ERROR,
                 on_primary=ft.Colors.WHITE,
-                on_secondary=ft.Colors.BLACK,
+                on_secondary=ft.Colors.WHITE,
                 outline=AppColors.DARK_TEXT_MUTED,
+                surface_tint=AppColors.TRANSPARENT,
+            ),
+            visual_density=ft.VisualDensity.COMFORTABLE,
+        )
+
+    @staticmethod
+    def get_light_theme() -> ft.Theme:
+        return ft.Theme(
+            color_scheme=ft.ColorScheme(
+                primary=AppColors.PRIMARY,
+                secondary=AppColors.SECONDARY,
+                surface=AppColors.LIGHT_BG,
+                on_surface=AppColors.LIGHT_TEXT,
+                on_surface_variant=AppColors.LIGHT_TEXT_DIM,
+                error=AppColors.ERROR,
+                on_primary=ft.Colors.WHITE,
+                on_secondary=ft.Colors.WHITE,
+                outline=AppColors.LIGHT_TEXT_MUTED,
+                surface_tint=AppColors.TRANSPARENT,
             ),
             visual_density=ft.VisualDensity.COMFORTABLE,
         )

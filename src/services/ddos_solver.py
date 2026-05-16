@@ -37,13 +37,13 @@ class DDoSSolver:
             pass
         return False
 
-    def get(self, url: str, headers: dict | None = None) -> httpx.Response:
+    def get(self, url: str, headers: dict | None = None, params: dict | None = None, **kwargs) -> httpx.Response:
         if not self._solved:
             self.solve()
         merged = {"User-Agent": "Mozilla/5.0"}
         if headers:
             merged.update(headers)
-        return self.client.get(url, headers=merged)
+        return self.client.get(url, headers=merged, params=params, **kwargs)
 
     def close(self):
         self.client.close()

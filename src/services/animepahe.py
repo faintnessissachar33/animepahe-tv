@@ -1,7 +1,7 @@
 import re
 import httpx
 from bs4 import BeautifulSoup
-from core.state import Anime, Episode, Source
+from core.state import Anime, Episode, Source, LatestRelease
 from services.ddos_solver import DDoSSolver
 
 BASE = "https://animepahe.com"
@@ -10,6 +10,33 @@ BASE = "https://animepahe.com"
 class AnimePaheScraper:
     def __init__(self):
         self.ddos = DDoSSolver()
+
+    def latest_releases(self, page: int = 1) -> tuple[list[LatestRelease], bool]:
+        resp = self.ddos.get(
+            f"{BASE}/api",
+            params={"m": "airing", "page": page},
+            headers={"Accept": "application/json"},
+        )
+        if resp.status_code != 200:
+            return [], False
+        try:
+            data = resp.json()
+        except (ValueError, httpx.DecodingError):
+            return [], False
+        
+        results = []
+        for item in data.get("data", []):
+            results.append(LatestRelease(
+                anime_id=item.get("anime_id", 0),
+                anime_title=item.get("anime_title", ""),
+                anime_session=item.get("anime_session", ""),
+                episode=item.get("episode", 0),
+                snapshot=item.get("snapshot", ""),
+                session=item.get("session", ""),
+                created_at=item.get("created_at", ""),
+            ))
+        has_more = data.get("current_page", 1) < data.get("last_page", 1)
+        return results, has_more
 
     def search(self, query: str, page: int = 1) -> tuple[list[Anime], bool]:
         results, has_more = self._search_api(query, page)

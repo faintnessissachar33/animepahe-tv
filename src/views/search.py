@@ -1,154 +1,228 @@
 import flet as ft
 from core.theme import AppColors
+from core.state import state
 
 
 def build_search_view(
     page_obj: ft.Page,
     on_search: callable,
     on_select_anime: callable,
+    on_back: callable,
 ) -> ft.View:
     search_field = ft.TextField(
-        hint_text="Search anime...",
-        color=AppColors.DARK_TEXT,
-        bgcolor=AppColors.DARK_SURFACE,
-        border_color=AppColors.DARK_TEXT_MUTED,
-        border_radius=10,
+        hint_text="Search for anime...",
+        color=ft.Colors.ON_SURFACE,
+        bgcolor=ft.Colors.with_opacity(0.05, ft.Colors.ON_SURFACE),
+        border_color=ft.Colors.TRANSPARENT,
+        border_radius=16,
         prefix_icon=ft.Icons.SEARCH_ROUNDED,
+        content_padding=20,
+        text_size=16,
         on_submit=lambda e: page_obj.run_task(on_search, e.data.strip()),
+        focused_border_color=AppColors.PRIMARY,
+        focused_bgcolor=ft.Colors.with_opacity(0.1, AppColors.PRIMARY),
     )
 
     results_grid = ft.GridView(
         expand=True,
         runs_count=4,
         max_extent=180,
-        child_aspect_ratio=0.55,
-        spacing=12,
-        run_spacing=12,
+        child_aspect_ratio=0.6,
+        spacing=16,
+        run_spacing=16,
     )
 
+    def on_hover_card(e, container, image):
+        if e.data == "true":
+            container.scale = 1.05
+            container.shadow = ft.BoxShadow(
+                spread_radius=2,
+                blur_radius=15,
+                color=ft.Colors.with_opacity(0.3, AppColors.PRIMARY),
+                offset=ft.Offset(0, 8),
+            )
+        else:
+            container.scale = 1.0
+            container.shadow = None
+        container.update()
+
+    def _build_card(anime) -> ft.Container:
+        img = ft.Image(
+            src=anime.poster if anime.poster else "",
+            fit="cover",
+            expand=True,
+        )
+        if not anime.poster:
+            img = ft.Container(
+                content=ft.Icon(ft.Icons.MOVIE_ROUNDED, size=48, color=ft.Colors.ON_SURFACE_VARIANT),
+                expand=True,
+                bgcolor=ft.Colors.with_opacity(0.1, ft.Colors.ON_SURFACE),
+                alignment=ft.Alignment.CENTER,
+            )
+
+        gradient = ft.Container(
+            gradient=ft.LinearGradient(
+                begin=ft.Alignment.TOP_CENTER,
+                end=ft.Alignment.BOTTOM_CENTER,
+                colors=[
+                    ft.Colors.TRANSPARENT,
+                    ft.Colors.with_opacity(0.9, ft.Colors.BLACK),
+                ],
+            ),
+            expand=True,
+        )
+
+        title_text = ft.Text(
+            anime.title,
+            color=ft.Colors.WHITE,
+            weight=ft.FontWeight.BOLD,
+            size=14,
+            max_lines=2,
+            overflow=ft.TextOverflow.ELLIPSIS,
+        )
+
+        year_text = ft.Text(
+            str(anime.year) if anime.year else "",
+            size=12,
+            color=ft.Colors.WHITE70,
+        )
+        
+        type_text = ft.Text(
+            anime.type,
+            size=12,
+            color=ft.Colors.WHITE70,
+        )
+
+        score_text = ft.Text(
+            f"{anime.score:.1f}",
+            size=12,
+            weight=ft.FontWeight.BOLD,
+            color=AppColors.SUCCESS if anime.score >= 7.5 else AppColors.WARNING,
+        )
+
+        content = ft.Stack(
+            controls=[
+                img,
+                gradient,
+                ft.Container(
+                    padding=12,
+                    alignment=ft.Alignment.BOTTOM_LEFT,
+                    content=ft.Column(
+                        [
+                            title_text,
+                            ft.Row([year_text, ft.Container(expand=True), type_text, score_text], spacing=4),
+                        ],
+                        alignment=ft.MainAxisAlignment.END,
+                        spacing=4,
+                    )
+                )
+            ],
+            expand=True,
+        )
+
+        card_container = ft.Container(
+            content=content,
+            border_radius=12,
+            clip_behavior="antiAlias",
+            animate_scale=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
+            animate=ft.Animation(300, ft.AnimationCurve.EASE_OUT),
+            on_click=lambda _: on_select_anime(anime),
+            on_hover=lambda e: on_hover_card(e, card_container, img),
+        )
+        return card_container
+
     def refresh_results():
-        from core.state import state
         results_grid.controls.clear()
-        for anime in state.search_results:
-            card = _build_card(anime, page_obj, on_select_anime)
-            results_grid.controls.append(card)
+        if state.is_loading:
+            loading_indicator.visible = True
+            empty_state.visible = False
+        elif not state.search_results and state.search_query:
+            loading_indicator.visible = False
+            empty_state.visible = True
+            empty_state.controls[1].value = f"No results found for '{state.search_query}'"
+        else:
+            loading_indicator.visible = False
+            empty_state.visible = False
+            for anime in state.search_results:
+                results_grid.controls.append(_build_card(anime))
         page_obj.update()
 
     page_obj.refresh_search_results = refresh_results
 
+    loading_indicator = ft.Container(
+        expand=True,
+        alignment=ft.Alignment.CENTER,
+        content=ft.ProgressRing(color=AppColors.PRIMARY, stroke_width=4),
+        visible=False,
+    )
+
+    empty_state = ft.Column(
+        [
+            ft.Icon(ft.Icons.SEARCH_OFF_ROUNDED, size=64, color=ft.Colors.ON_SURFACE_VARIANT),
+            ft.Text("Search for an anime to get started.", size=16, color=ft.Colors.ON_SURFACE_VARIANT),
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        alignment=ft.MainAxisAlignment.CENTER,
+        expand=True,
+    )
+
+    header = ft.Container(
+        padding=ft.Padding.only(left=24, right=24, top=24, bottom=16),
+        content=ft.Column(
+            [
+                ft.Row(
+                    [
+                        ft.IconButton(
+                            icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
+                            icon_color=ft.Colors.ON_SURFACE,
+                            on_click=lambda _: on_back(),
+                            tooltip="Back",
+                        ),
+                        ft.Container(
+                            width=36,
+                            height=36,
+                            border_radius=10,
+                            bgcolor=AppColors.PRIMARY,
+                            alignment=ft.Alignment.CENTER,
+                            content=ft.Image(
+                                src="icon.png",
+                                width=24,
+                                height=24,
+                                fit="contain"
+                            ),
+                        ),
+                        ft.Text("Search", size=24, weight=ft.FontWeight.BOLD),
+                    ],
+                    spacing=12,
+                ),
+                ft.Container(height=8),
+                search_field,
+            ],
+            spacing=0,
+        )
+    )
+
     content = ft.Column(
         [
-            ft.Container(
-                content=ft.Column(
-                    [
-                        ft.Row(
-                            [
-                                ft.Container(
-                                    width=36,
-                                    height=36,
-                                    border_radius=10,
-                                    bgcolor=AppColors.PRIMARY,
-                                    alignment=ft.Alignment(0, 0),
-                                    content=ft.Icon(
-                                        ft.Icons.PLAY_CIRCLE_FILL_ROUNDED,
-                                        size=20,
-                                        color=ft.Colors.WHITE,
-                                    ),
-                                ),
-                                ft.Text(
-                                    "AnimePahe TV",
-                                    size=18,
-                                    weight=ft.FontWeight.BOLD,
-                                    color=AppColors.DARK_TEXT,
-                                ),
-                            ],
-                            spacing=10,
-                        ),
-                        ft.Container(height=16),
-                        search_field,
-                    ],
-                    spacing=0,
-                ),
-                padding=ft.Padding(20, 20, 20, 0),
-            ),
+            header,
             ft.Container(
                 expand=True,
-                padding=ft.Padding(20, 10, 20, 20),
-                content=results_grid,
+                padding=ft.Padding.only(left=24, right=24, bottom=24),
+                content=ft.Stack([results_grid, loading_indicator, empty_state]),
             ),
         ],
         spacing=0,
         expand=True,
     )
 
-    return ft.View(
+    view = ft.View(
         route="/search",
-        controls=[
-            ft.SafeArea(
-                ft.Container(
-                    content=content,
-                    expand=True,
-                    bgcolor=AppColors.DARK_BG,
-                ),
-                expand=True,
-            ),
-        ],
+        controls=[content],
         padding=0,
+        bgcolor=ft.Colors.SURFACE,
     )
 
+    # Initial load trigger
+    refresh_results()
 
-def _build_card(anime, page_obj: ft.Page, on_select_anime: callable) -> ft.Container:
-    return ft.Container(
-        width=180,
-        height=320,
-        bgcolor=AppColors.DARK_SURFACE,
-        border_radius=12,
-        ink=True,
-        on_click=lambda _: on_select_anime(anime),
-        content=ft.Column(
-            spacing=4,
-            controls=[
-                ft.Container(
-                    height=200,
-                    bgcolor=AppColors.DARK_SURFACE_VARIANT,
-                    border_radius=ft.border_vertical(top=12),
-                    content=(
-                        ft.Image(src=anime.poster, fit=ft.ImageFit.COVER,
-                                 border_radius=ft.border_vertical(top=12))
-                        if anime.poster
-                        else ft.Icon(ft.Icons.MOVIE, size=40, color=AppColors.DARK_TEXT_MUTED)
-                    ),
-                ),
-                ft.Container(
-                    padding=ft.Padding(8, 4, 8, 8),
-                    content=ft.Column(
-                        spacing=2,
-                        controls=[
-                            ft.Text(
-                                anime.title,
-                                size=12,
-                                color=AppColors.DARK_TEXT,
-                                weight=ft.FontWeight.BOLD,
-                                max_lines=2,
-                                overflow=ft.TextOverflow.ELLIPSIS,
-                            ),
-                            ft.Row(
-                                spacing=6,
-                                controls=[
-                                    ft.Text(str(anime.year), size=10, color=AppColors.DARK_TEXT_MUTED),
-                                    ft.Text(anime.type, size=10, color=AppColors.DARK_TEXT_MUTED),
-                                    ft.Container(expand=True),
-                                    ft.Text(
-                                        f"{anime.score:.1f}",
-                                        size=11,
-                                        color=AppColors.PRIMARY,
-                                        weight=ft.FontWeight.BOLD,
-                                    ),
-                                ],
-                            ),
-                        ],
-                    ),
-                ),
-            ],
-        ),
-    )
+    return view

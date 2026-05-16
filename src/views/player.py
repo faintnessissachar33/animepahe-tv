@@ -12,13 +12,14 @@ def build_player_view(
     scraper,
 ) -> ft.View:
     kwik = KwikResolver()
+    
     video = fv.Video(
         autoplay=True,
         expand=True,
         aspect_ratio=16 / 9,
         show_controls=True,
         wakelock=True,
-        filter_quality=ft.FilterQuality.MEDIUM,
+        filter_quality=ft.FilterQuality.HIGH,
         pause_upon_entering_background_mode=True,
         resume_upon_entering_foreground_mode=True,
         on_error=lambda e: _on_error(e, page_obj),
@@ -26,57 +27,74 @@ def build_player_view(
     )
 
     status_text = ft.Text(
-        "Resolving stream...",
-        size=14,
-        color=AppColors.DARK_TEXT_DIM,
+        "Resolving High Quality Stream...",
+        size=16,
+        color=ft.Colors.WHITE,
+        weight=ft.FontWeight.W_500,
         text_align=ft.TextAlign.CENTER,
     )
 
-    loading = ft.ProgressRing(width=20, height=20, color=AppColors.PRIMARY)
+    loading = ft.ProgressRing(width=40, height=40, stroke_width=4, color=AppColors.PRIMARY)
 
+    # Premium glassmorphic loading overlay
     overlay = ft.Container(
         expand=True,
-        bgcolor=ft.Colors.BLACK,
-        alignment=ft.Alignment(0, 0),
+        bgcolor=ft.Colors.with_opacity(0.8, ft.Colors.BLACK),
+        blur=ft.Blur(20, 20, "mirror"),
+        alignment=ft.Alignment.CENTER,
         content=ft.Column(
             [
-                status_text,
-                ft.Container(height=12),
                 loading,
+                ft.Container(height=24),
+                status_text,
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             alignment=ft.MainAxisAlignment.CENTER,
         ),
     )
 
+    def on_back(e):
+        if len(page_obj.views) > 1:
+            page_obj.views.pop()
+            page_obj.update()
+
     back_btn = ft.Container(
-        left=12,
+        left=24,
         top=40,
         content=ft.IconButton(
             icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
             icon_color=ft.Colors.WHITE,
-            icon_size=20,
-            bgcolor=ft.Colors.BLACK45,
-            on_click=lambda _: page_obj.page.views.pop() if len(page_obj.page.views) > 1 else None,
+            icon_size=24,
+            bgcolor=ft.Colors.with_opacity(0.3, ft.Colors.BLACK),
+            on_click=on_back,
+            tooltip="Back",
         ),
     )
 
-    sources = scraper.sources(anime_session, episode_session)
-    if sources:
-        best = max(sources, key=lambda s: s.resolution)
-        m3u8 = kwik.resolve(best.url)
-        if m3u8:
-            video.playlist = [fv.VideoMedia(m3u8, http_headers={"Referer": best.url})]
-            video.autoplay = True
-            overlay.visible = False
-        else:
-            status_text.value = "Failed to resolve stream"
+    # Resolve sources
+    def resolve_and_play():
+        try:
+            sources = scraper.sources(anime_session, episode_session)
+            if sources:
+                best = max(sources, key=lambda s: s.resolution)
+                m3u8 = kwik.resolve(best.url)
+                if m3u8:
+                    video.playlist = [fv.VideoMedia(m3u8, http_headers={"Referer": best.url})]
+                    video.autoplay = True
+                    overlay.visible = False
+                else:
+                    status_text.value = "Failed to resolve stream"
+                    loading.visible = False
+            else:
+                status_text.value = "No sources found"
+                loading.visible = False
+            page_obj.update()
+        except Exception as e:
+            status_text.value = "An error occurred while resolving"
             loading.visible = False
-    else:
-        status_text.value = "No sources found"
-        loading.visible = False
+            page_obj.update()
 
-    return ft.View(
+    view = ft.View(
         route=f"/play?src={anime_session}|{episode_session}",
         controls=[
             ft.Stack(
@@ -92,12 +110,19 @@ def build_player_view(
         padding=0,
     )
 
+    # Run resolution async so it doesn't block the UI rendering
+    page_obj.run_task(resolve_and_play)
+
+    return view
+
 
 def _on_error(e, page_obj: ft.Page):
     state.player_error = e.data
     try:
         page_obj.snack_bar = ft.SnackBar(
-            ft.Text("Playback error"), bgcolor=AppColors.ERROR,
+            ft.Text("Playback error", color=ft.Colors.WHITE),
+            bgcolor=AppColors.ERROR,
+            duration=3000,
         )
         page_obj.snack_bar.open = True
         page_obj.update()
@@ -108,7 +133,9 @@ def _on_error(e, page_obj: ft.Page):
 def _on_ended(page_obj: ft.Page):
     try:
         page_obj.snack_bar = ft.SnackBar(
-            ft.Text("Playback ended"), bgcolor=AppColors.SUCCESS,
+            ft.Text("Playback ended", color=ft.Colors.WHITE),
+            bgcolor=AppColors.SUCCESS,
+            duration=3000,
         )
         page_obj.snack_bar.open = True
         page_obj.update()
