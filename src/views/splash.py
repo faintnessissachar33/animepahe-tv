@@ -21,10 +21,10 @@ def build_splash_view() -> ft.View:
                         ft.Text(
                             "AnimePahe TV", size=24, weight=ft.FontWeight.BOLD, color=ft.Colors.WHITE
                         ),
-                        ft.Text("Stream anime. No server needed.", color=ft.Colors.WHITE70),
+                        ft.Text("Stream anime. No server needed.", color=ft.Colors.WHITE_70),
                         ft.Container(height=20),
                         ft.ProgressBar(
-                            width=240, color=AppColors.PRIMARY, bgcolor=ft.Colors.WHITE24
+                            width=240, color=AppColors.PRIMARY, bgcolor=ft.Colors.WHITE_24
                         ),
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
