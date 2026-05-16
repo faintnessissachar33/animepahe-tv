@@ -164,7 +164,7 @@ def build_search_view(
             key=f"search_card_{idx}",
             on_click=lambda _: on_select_anime(anime),
         )
-        card_container.tab_index = 0
+        card_container.tab_index = idx + 1
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)
         card_container.on_blur = lambda e: _on_blur_card(e, card_container)
         return card_container

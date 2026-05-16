@@ -23,7 +23,7 @@ def build_player_view(
         pause_upon_entering_background_mode=True,
         resume_upon_entering_foreground_mode=True,
         on_error=lambda e: _on_error(e, page_obj),
-        on_ended=lambda e: _on_ended(page_obj),
+        on_complete=lambda e: _on_ended(page_obj),
     )
 
     status_text = ft.Text(

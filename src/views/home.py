@@ -98,7 +98,7 @@ def build_home_view(
             on_click=lambda _: on_select_anime(release.anime_session),
             on_hover=lambda e: on_hover_card(e, card_container, img),
         )
-        card_container.tab_index = 0
+        card_container.tab_index = idx + 1
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)
         card_container.on_blur = lambda e: _on_blur_card(e, card_container)
 
