@@ -20,7 +20,7 @@ def _theme_button_style(page: ft.Page, is_primary: bool = False):
     return ft.ButtonStyle(
         bgcolor={
             ft.ControlState.FOCUSED: AppColors.PRIMARY,
-            ft.ControlState.DEFAULT: AppColors.PRIMARY if is_primary else AppColors.get_surface_variant(page),
+            ft.ControlState.DEFAULT: AppColors.PRIMARY if is_primary else ft.Colors.SURFACE,
         },
         color={
             ft.ControlState.FOCUSED: ft.Colors.WHITE,
