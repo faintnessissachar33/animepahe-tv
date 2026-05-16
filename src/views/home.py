@@ -11,11 +11,9 @@ def build_home_view(
     on_page_change: callable = None,
 ) -> ft.View:
 
-    latest_grid = ft.GridView(
-        expand=False,
-        runs_count=5,
-        max_extent=200,
-        child_aspect_ratio=0.65,
+    CARD_HEIGHT = 280
+
+    latest_grid = ft.ResponsiveRow(
         spacing=16,
         run_spacing=16,
         padding=24,
@@ -94,6 +92,7 @@ def build_home_view(
             animate_scale=300,
             animate=300,
             ink=True,
+            height=CARD_HEIGHT,
             key=f"home_card_{idx}",
             on_click=lambda _: on_select_anime(release.anime_session),
             on_hover=lambda e: on_hover_card(e, e.control),
@@ -102,7 +101,11 @@ def build_home_view(
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)
         card_container.on_blur = lambda e: _on_blur_card(e, card_container)
 
-        return card_container
+        wrapper = ft.Container(
+            content=card_container,
+            col={"xs": 6, "sm": 4, "md": 3, "lg": 2, "xl": 2},
+        )
+        return wrapper
 
     def _on_focus_card(e, ctrl):
         ctrl.scale = 1.05

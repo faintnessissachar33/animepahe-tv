@@ -82,11 +82,9 @@ def build_anime_detail_view(
             parts.append(f"\u2605 {anime.score:.1f}")
         info_text.value = " \u2022 ".join(parts)
 
-    episode_grid = ft.GridView(
-        expand=False,
-        runs_count=3,
-        max_extent=250,
-        child_aspect_ratio=1.6,
+    EP_CARD_HEIGHT = 140
+
+    episode_grid = ft.ResponsiveRow(
         spacing=16,
         run_spacing=16,
     )
@@ -203,13 +201,19 @@ def build_anime_detail_view(
             animate_scale=300,
             animate=300,
             ink=True,
+            height=EP_CARD_HEIGHT,
             key=f"ep_card_{idx}",
             on_click=lambda _, a=anime_session, es=ep.session: page_obj.run_task(on_play, a, es),
         )
         card_container.tab_index = idx + 2
         card_container.on_focus = lambda e: _on_focus_ep(e, card_container)
         card_container.on_blur = lambda e: _on_blur_ep(e, card_container)
-        return card_container
+
+        wrapper = ft.Container(
+            content=card_container,
+            col={"xs": 12, "sm": 6, "md": 4, "lg": 4, "xl": 3},
+        )
+        return wrapper
 
     def refresh_episodes():
         episode_grid.controls.clear()

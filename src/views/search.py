@@ -10,6 +10,8 @@ def build_search_view(
     on_back: callable,
 ) -> ft.View:
 
+    CARD_HEIGHT = 260
+
     search_field = ft.TextField(
         hint_text="Search for anime...",
         color=ft.Colors.ON_SURFACE,
@@ -24,11 +26,7 @@ def build_search_view(
         focused_bgcolor=ft.Colors.with_opacity(0.1, AppColors.PRIMARY),
     )
 
-    results_grid = ft.GridView(
-        expand=False,
-        runs_count=4,
-        max_extent=180,
-        child_aspect_ratio=0.6,
+    results_grid = ft.ResponsiveRow(
         spacing=16,
         run_spacing=16,
     )
@@ -80,7 +78,7 @@ def build_search_view(
         except Exception:
             pass
 
-    def _build_card(anime, idx: int) -> ft.Container:
+    def _build_card(anime, idx: int):
         img = ft.Image(
             src=anime.poster if anime.poster else "",
             fit="cover",
@@ -161,13 +159,19 @@ def build_search_view(
             animate_scale=300,
             animate=300,
             ink=True,
+            height=CARD_HEIGHT,
             key=f"search_card_{idx}",
             on_click=lambda _: on_select_anime(anime),
         )
-        card_container.tab_index = idx + 1
+        card_container.tab_index = idx + 2
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)
         card_container.on_blur = lambda e: _on_blur_card(e, card_container)
-        return card_container
+
+        wrapper = ft.Container(
+            content=card_container,
+            col={"xs": 6, "sm": 4, "md": 3, "lg": 3, "xl": 2},
+        )
+        return wrapper
 
     def refresh_results():
         results_grid.controls.clear()
@@ -245,14 +249,16 @@ def build_search_view(
         )
     )
 
+    grid_area = ft.Container(
+        expand=True,
+        padding=ft.Padding.only(left=24, right=24, bottom=24),
+        content=ft.Stack([results_grid, loading_indicator, empty_state]),
+    )
+
     scroll_content = ft.Column(
         [
             header,
-            ft.Container(
-                expand=True,
-                padding=ft.Padding.only(left=24, right=24, bottom=24),
-                content=ft.Stack([results_grid, loading_indicator, empty_state]),
-            ),
+            grid_area,
         ],
         spacing=0,
         expand=False,
