@@ -32,20 +32,41 @@ class AppColors:
     TRANSPARENT = ft.Colors.TRANSPARENT
 
     @staticmethod
+    def _is_dark(page: ft.Page) -> bool:
+        if page.theme_mode == ft.ThemeMode.LIGHT:
+            return False
+        if page.theme_mode == ft.ThemeMode.DARK:
+            return True
+        try:
+            surface = page.theme.color_scheme.surface
+            return surface and str(surface).lower().startswith(("#0", "#1"))
+        except Exception:
+            return True
+
+    @staticmethod
     def get_glass_bg(page: ft.Page):
         return ft.Colors.with_opacity(
-            0.05, ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK
+            0.05, ft.Colors.WHITE if AppColors._is_dark(page) else ft.Colors.BLACK
         )
-    
+
     @staticmethod
     def get_hover_bg(page: ft.Page):
         return ft.Colors.with_opacity(
-            0.1, ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK
+            0.1, ft.Colors.WHITE if AppColors._is_dark(page) else ft.Colors.BLACK
         )
 
     @staticmethod
     def get_surface_variant(page: ft.Page):
-        return AppColors.DARK_SURFACE_VARIANT if page.theme_mode == ft.ThemeMode.DARK else AppColors.LIGHT_SURFACE_VARIANT
+        if page.theme_mode == ft.ThemeMode.LIGHT:
+            return AppColors.LIGHT_SURFACE_VARIANT
+        if page.theme_mode == ft.ThemeMode.DARK:
+            return AppColors.DARK_SURFACE_VARIANT
+        try:
+            surface = page.theme.color_scheme.surface
+            is_dark = surface and str(surface).lower().startswith(("#0", "#1"))
+            return AppColors.DARK_SURFACE_VARIANT if is_dark else AppColors.LIGHT_SURFACE_VARIANT
+        except Exception:
+            return AppColors.DARK_SURFACE_VARIANT
 
 
 class AppTheme:
