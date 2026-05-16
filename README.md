@@ -19,15 +19,15 @@
 
 ## Download
 
-| Platform | Download | Notes |
-|:--------:|:--------:|:------|
-| 🤖 **Android (Universal)** | [**animepahe-tv.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv.apk) | Works on all Android devices (ARM64, ARMv7, x86_64) |
-| 🤖 **Android (ARM64)** | [**animepahe-tv-arm64-v8a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-arm64-v8a.apk) | For modern 64-bit Android devices |
-| 🤖 **Android (ARM32)** | [**animepahe-tv-armeabi-v7a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-armeabi-v7a.apk) | For older 32-bit Android devices |
-| 🤖 **Android (x86_64)** | [**animepahe-tv-x86_64.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-x86_64.apk) | For Android emulators / ChromeOS |
-| 🪟 **Windows** | [**AnimePahe_TV_Setup.exe**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/AnimePahe_TV_Setup.exe) | Windows 10/11 Installer (64-bit) |
-| 🍎 **macOS** | *Coming soon* | |
-| 📱 **iOS** | *Coming soon* | |
+| Platform | Download | Size | Notes |
+|:--------:|:--------:|:----:|:------|
+| 🤖 **Android (Universal)** | [**animepahe-tv.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv.apk) | ~120 MB | Works on all Android devices (ARM64, ARMv7, x86_64) |
+| 🤖 **Android (ARM64)** | [**animepahe-tv-arm64-v8a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-arm64-v8a.apk) | ~50 MB | For modern 64-bit Android devices |
+| 🤖 **Android (ARM32)** | [**animepahe-tv-armeabi-v7a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-armeabi-v7a.apk) | ~45 MB | For older 32-bit Android devices |
+| 🤖 **Android (x86_64)** | [**animepahe-tv-x86_64.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-x86_64.apk) | ~55 MB | For Android emulators / ChromeOS |
+| 🪟 **Windows** | [**AnimePahe_TV_Setup.exe**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/AnimePahe_TV_Setup.exe) | ~80 MB | Windows 10/11 Installer (64-bit) |
+| 🍎 **macOS** | *Coming soon* | — | |
+| 📱 **iOS** | *Coming soon* | — | |
 
 ---
 
@@ -41,7 +41,7 @@
 
 - **Browse & Search** — Paginated anime discovery with real-time search and cover art previews.
 - **Episode Grid** — Snapshot-based episode cards with pagination, duration display, and filler indicators.
-- **Multi-Quality Stream Resolution** — Automatic best-quality selection from available resolutions (360p–1080p).
+- **Quality & Audio Selector** — Choose from all available stream qualities (360p–1080p) and audio tracks (SUB/DUB) before playback.
 - **TV Remote Navigation** — Full D-pad support with sequential tab indexing, focus ring highlights, and hover effects. Optimized for Android TV, Fire Stick, and Leanback.
 - **Adaptive Scraper Waterfall** — Multi-strategy content resolution: JSON API → HTML parsing → regex extraction → Dean Edwards JS unpack. Each layer has tested fallbacks.
 - **System Theme Awareness** — Automatically follows device light/dark mode with manual override.
@@ -98,9 +98,9 @@ scraper.sources() ────────────────────�
     ├── _sources_data_src()  ← parse data-src attrs │
     │                                               │
     └── _sources_regex()     ← regex kwik URLs     │
-                                                    │
-                                                    ▼
-best = max(sources, key=resolution)                 │
+                                                     │
+                                                     ▼
+User selects quality & audio from dialog ───────────┤
     │                                               │
     ▼                                               │
 kwik.resolve() ─────────────────────────────────────┤
@@ -108,8 +108,8 @@ kwik.resolve() ─────────────────────�
     ├── _resolve_dean()   ← unpack JS, find m3u8   │
     │                                               │
     └── _resolve_direct() ← regex scan HTML         │
-                                                    │
-                                                    ▼
+                                                     │
+                                                     ▼
 video.playlist = [VideoMedia(m3u8, headers)] ───────┘
 ```
 
