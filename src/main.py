@@ -186,7 +186,7 @@ async def main(page: ft.Page):
 
         sources.sort(key=lambda s: s.resolution, reverse=True)
 
-        async def on_select(e, src):
+        def on_select(e, src):
             state.selected_source = src
             state.current_anime_session = anime_session
             state.current_episode_session = episode_session
@@ -195,12 +195,15 @@ async def main(page: ft.Page):
             except Exception:
                 pass
             if USE_EXTERNAL_PLAYER:
-                await play_episode_external(anime_session, episode_session)
+                page.run_task(play_episode_external, anime_session, episode_session)
             else:
-                page.snack_bar = ft.SnackBar(ft.Text("Resolving stream..."), bgcolor=AppColors.SUCCESS)
-                page.snack_bar.open = True
-                page.update()
-                await navigate("/play")
+                page.run_task(_start_playback)
+
+        async def _start_playback():
+            page.snack_bar = ft.SnackBar(ft.Text("Resolving stream..."), bgcolor=AppColors.SUCCESS)
+            page.snack_bar.open = True
+            page.update()
+            await navigate("/play")
 
         buttons = []
         for src in sources:
