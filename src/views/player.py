@@ -86,7 +86,7 @@ def build_player_view(
     back_btn.on_focus = _on_focus_btn
     back_btn.on_blur = _on_blur_btn
 
-    def resolve_and_play():
+    async def resolve_and_play():
         try:
             sources = scraper.sources(anime_session, episode_session)
             if sources:
