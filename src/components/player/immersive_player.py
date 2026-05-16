@@ -1,6 +1,5 @@
 import flet as ft
 import flet_video as fv
-from core.theme import AppColors
 
 
 class ImmersivePlayer(ft.Stack):

@@ -1,6 +1,6 @@
 import flet as ft
 from core.theme import AppColors
-from core.state import state, Anime
+from core.state import state
 
 
 def build_anime_detail_view(

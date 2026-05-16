@@ -41,7 +41,7 @@ async def main(page: ft.Page):
     scraper = AnimePaheScraper()
     cache = Cache()
 
-    focus_manager = FocusManager(page)
+    FocusManager(page)
 
     state.scraper = scraper
     state.cache = cache

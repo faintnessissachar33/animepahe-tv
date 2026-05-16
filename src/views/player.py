@@ -97,7 +97,7 @@ def _on_error(e, page_obj: ft.Page):
     state.player_error = e.data
     try:
         page_obj.snack_bar = ft.SnackBar(
-            ft.Text(f"Playback error"), bgcolor=AppColors.ERROR,
+            ft.Text("Playback error"), bgcolor=AppColors.ERROR,
         )
         page_obj.snack_bar.open = True
         page_obj.update()

@@ -31,3 +31,8 @@ bundle_id = "com.animepahe.tv"
 [tool.flet.android.feature]
 "android.software.leanback" = true
 "android.hardware.touchscreen" = false
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.13",
+]

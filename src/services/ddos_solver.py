@@ -12,7 +12,7 @@ class DDoSSolver:
         if self._solved:
             return True
         try:
-            resp = self.client.get(
+            self.client.get(
                 f"{BASE}/",
                 headers={
                     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "

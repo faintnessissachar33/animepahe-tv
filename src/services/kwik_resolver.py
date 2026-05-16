@@ -21,7 +21,6 @@ def _dean_unpack(html_text: str) -> list[str]:
     for match in KWIK_PATTERN.finditer(html_text):
         payload = match.group(1)
         radix_str = match.group(2)
-        count = int(match.group(3))
         symtab = match.group(4).split("|")
         radix = 62 if radix_str.startswith("[") else int(radix_str)
         payload = payload.replace("\\\\", "\\").replace("\\'", "'")
