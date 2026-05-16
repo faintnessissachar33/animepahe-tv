@@ -26,6 +26,8 @@
 | 🤖 **Android (ARM32)** | [**animepahe-tv-armeabi-v7a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-armeabi-v7a.apk) | For older 32-bit Android devices |
 | 🤖 **Android (x86_64)** | [**animepahe-tv-x86_64.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-x86_64.apk) | For Android emulators / ChromeOS |
 | 🪟 **Windows** | [**AnimePahe_TV_Setup.exe**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/AnimePahe_TV_Setup.exe) | Windows 10/11 Installer (64-bit) |
+| 🍎 **macOS** | *Coming soon* | |
+| 📱 **iOS** | *Coming soon* | |
 ---
 
 ## Screenshots
