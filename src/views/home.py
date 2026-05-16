@@ -21,7 +21,7 @@ def build_home_view(
         padding=24,
     )
 
-    def on_hover_card(e, container, image):
+    def on_hover_card(e, container):
         if e.data == "true":
             container.scale = 1.05
             container.shadow = ft.BoxShadow(
@@ -96,7 +96,7 @@ def build_home_view(
             ink=True,
             key=f"home_card_{idx}",
             on_click=lambda _: on_select_anime(release.anime_session),
-            on_hover=lambda e: on_hover_card(e, card_container, img),
+            on_hover=lambda e: on_hover_card(e, e.control),
         )
         card_container.tab_index = idx + 3
         card_container.on_focus = lambda e: _on_focus_card(e, card_container)

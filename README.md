@@ -5,7 +5,7 @@
 <h1 align="center">AnimePahe TV</h1>
 
 <p align="center">
-  A lightweight, client-side streaming app for browsing and watching anime from AnimePahe. Built with Python and Flet.
+  A high-performance, client-side anime streaming application with TV-optimized navigation, multi-quality stream resolution, and a responsive glassmorphic UI. Built with Python and Flet.
 </p>
 
 <p align="center">
@@ -28,6 +28,7 @@
 | 🪟 **Windows** | [**AnimePahe_TV_Setup.exe**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/AnimePahe_TV_Setup.exe) | Windows 10/11 Installer (64-bit) |
 | 🍎 **macOS** | *Coming soon* | |
 | 📱 **iOS** | *Coming soon* | |
+
 ---
 
 ## Screenshots
@@ -38,21 +39,110 @@
 
 ## Features
 
-- **Browse & Search** — Find any anime by keyword with paginated results.
-- **Episode Grid** — Snapshot previews, pagination, filler indicators.
-- **Multi-Quality** — Choose between available resolutions (360p, 720p, 800p+).
-- **TV Remote Ready** — D-pad navigation with visible focus highlights. Built for Android TV and Fire Stick.
-- **Waterflow Fallbacks** — Each scraper method has multiple tested backup strategies. If the server changes an endpoint, the next method takes over.
+- **Browse & Search** — Paginated anime discovery with real-time search and cover art previews.
+- **Episode Grid** — Snapshot-based episode cards with pagination, duration display, and filler indicators.
+- **Multi-Quality Stream Resolution** — Automatic best-quality selection from available resolutions (360p–1080p).
+- **TV Remote Navigation** — Full D-pad support with sequential tab indexing, focus ring highlights, and hover effects. Optimized for Android TV, Fire Stick, and Leanback.
+- **Adaptive Scraper Waterfall** — Multi-strategy content resolution: JSON API → HTML parsing → regex extraction → Dean Edwards JS unpack. Each layer has tested fallbacks.
+- **System Theme Awareness** — Automatically follows device light/dark mode with manual override.
+- **Responsive Layout** — SafeArea-wrapped, ListView-scrollable views that adapt from phone to TV screen sizes.
 
 ## Architecture
 
 | Layer | Technology |
 |-------|-----------|
-| Frontend | Flet (Python → Flutter) |
-| Video | `flet-video` (libmpv) |
-| Network | `httpx` (async, connection pooling) |
-| Cache | `aiosqlite` (WAL-mode SQLite with TTL) |
-| Scraper | Pure Python (Dean Edwards JS unpack, regex, HTML parse) |
+| Frontend | Flet 0.85 (Python → Flutter) |
+| Video Engine | `flet-video` (libmpv backend) |
+| Network | `httpx` (async, connection pooling, 15s timeout) |
+| Cache | `aiosqlite` (WAL-mode SQLite with TTL expiration) |
+| Stream Resolver | Dean Edwards JS unpack + regex + BeautifulSoup HTML parsing |
+| DDoS Bypass | Cloudflare challenge solver with JA3 fingerprint rotation |
+| State Management | Flet `@observable` reactive state with page-scoped view builders |
+| Routing | Flet declarative routing with base64-encoded URL parameters |
+| Navigation | Sequential `tab_index` D-pad focus chain across all interactive elements |
+
+### Project Structure
+
+```
+src/
+├── main.py                 # App entry, routing, global back handler, theme init
+├── core/
+│   ├── config.py           # Feature flags (internal/external player toggle)
+│   ├── state.py            # @observable reactive state (AppState)
+│   ├── theme.py            # Light/dark color schemes, glass bg helpers
+│   └── focus_manager.py    # Global keyboard/back event handler for TV remotes
+├── views/
+│   ├── splash.py           # Animated splash with auto-transition
+│   ├── home.py             # Latest releases grid + pagination + D-pad focus
+│   ├── search.py           # Search bar + results grid + D-pad focus
+│   ├── anime_detail.py     # Anime info + episode grid + pagination + D-pad
+│   └── player.py           # flet-video player with stream resolution overlay
+├── services/
+│   ├── animepahe.py        # Multi-strategy scraper (API → HTML → regex)
+│   ├── kwik_resolver.py    # Dean Edwards JS unpacker + m3u8 extractor
+│   ├── ddos_solver.py      # Cloudflare challenge bypass
+│   └── cache.py            # Async SQLite cache with TTL
+└── components/
+    └── player/
+        └── immersive_player.py  # Full-screen player wrapper (future)
+```
+
+### Stream Resolution Pipeline
+
+```
+User clicks episode
+    │
+    ▼
+scraper.sources() ─────────────────────────────────┐
+    │                                               │
+    ├── _sources_data_src()  ← parse data-src attrs │
+    │                                               │
+    └── _sources_regex()     ← regex kwik URLs     │
+                                                    │
+                                                    ▼
+best = max(sources, key=resolution)                 │
+    │                                               │
+    ▼                                               │
+kwik.resolve() ─────────────────────────────────────┤
+    │                                               │
+    ├── _resolve_dean()   ← unpack JS, find m3u8   │
+    │                                               │
+    └── _resolve_direct() ← regex scan HTML         │
+                                                    │
+                                                    ▼
+video.playlist = [VideoMedia(m3u8, headers)] ───────┘
+```
+
+### D-Pad Navigation Model
+
+Every interactive element is assigned a sequential `tab_index` so Android's `FocusFinder` can navigate with arrow keys:
+
+```
+Home:    Search(1) → Theme(2) → Cards(3..N) → Prev(N+1) → Next(N+2)
+Search:  Back(1) → Cards(2..N)
+Detail:  Back(1) → Episodes(2..N) → Prev(N+1) → Next(N+2)
+Player:  Back(1)
+```
+
+Focus highlights are applied via `on_focus`/`on_blur` callbacks that animate scale, shadow, and border color.
+
+## Development
+
+```bash
+# Clone and set up
+git clone https://github.com/Nwokike/animepahe-tv.git
+cd animepahe-tv
+uv sync
+
+# Run in development
+flet run
+
+# Build for Android
+flet build apk --release
+
+# Build for Windows
+flet build windows --release
+```
 
 ## Legal Disclaimer
 
