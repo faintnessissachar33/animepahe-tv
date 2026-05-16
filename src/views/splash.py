@@ -1,48 +1,56 @@
 import flet as ft
-from core.theme import AppTheme
+from core.theme import AppColors
 
 
-class SplashView:
-    def __init__(self, app):
-        self.app = app
-        self.theme = AppTheme()
-        self._connecting = True
-
-    def build(self) -> ft.View:
-        return ft.View(
-            bgcolor=self.theme.bg_primary,
-            controls=[
-                ft.Container(
-                    expand=True,
-                    alignment=ft.alignment.center,
-                    content=ft.Column(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        spacing=20,
-                        controls=[
-                            ft.Text(
-                                "AnimePahe TV",
-                                size=36,
-                                weight=ft.FontWeight.BOLD,
-                                color=self.theme.accent,
+def build_splash_view() -> ft.View:
+    return ft.View(
+        route="/",
+        controls=[
+            ft.Container(
+                expand=True,
+                alignment=ft.Alignment(0, 0),
+                bgcolor=AppColors.SPLASH_BG,
+                content=ft.Column(
+                    [
+                        ft.Container(
+                            width=80,
+                            height=80,
+                            border_radius=20,
+                            bgcolor=AppColors.PRIMARY,
+                            alignment=ft.Alignment(0, 0),
+                            content=ft.Icon(
+                                ft.Icons.PLAY_CIRCLE_FILL_ROUNDED,
+                                size=48,
+                                color=ft.Colors.WHITE,
                             ),
-                            ft.ProgressRing(
-                                width=32,
-                                height=32,
-                                color=self.theme.accent,
-                            ),
-                            ft.Text(
-                                "Connecting...",
-                                size=14,
-                                color=self.theme.text_secondary,
-                            ),
-                        ],
-                    ),
+                        ),
+                        ft.Container(height=16),
+                        ft.Text(
+                            "AnimePahe TV",
+                            size=28,
+                            weight=ft.FontWeight.BOLD,
+                            color=ft.Colors.WHITE,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Text(
+                            "Stream anime. No server needed.",
+                            size=13,
+                            color=AppColors.DARK_TEXT_DIM,
+                            text_align=ft.TextAlign.CENTER,
+                        ),
+                        ft.Container(height=32),
+                        ft.ProgressRing(
+                            width=24,
+                            height=24,
+                            stroke_width=3,
+                            color=AppColors.PRIMARY,
+                        ),
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    alignment=ft.MainAxisAlignment.CENTER,
+                    spacing=0,
                 ),
-            ],
-        )
-
-    def on_ready(self):
-        if self._connecting:
-            self._connecting = False
-            self.app.show_search()
+            )
+        ],
+        padding=0,
+    )

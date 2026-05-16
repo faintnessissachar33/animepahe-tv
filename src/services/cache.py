@@ -1,14 +1,19 @@
 import json
 import time
 import aiosqlite
+import os
 
 
 class Cache:
-    def __init__(self, db_path: str = "animepahe.db"):
-        self.db_path = db_path
+    def __init__(self, db_path: str = "storage/data/animepahe.db"):
+        self.db_path = os.path.abspath(db_path)
 
     async def _ensure_table(self):
+        db_dir = os.path.dirname(self.db_path)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
         async with aiosqlite.connect(self.db_path) as db:
+            await db.execute("PRAGMA journal_mode=WAL;")
             await db.execute("""
                 CREATE TABLE IF NOT EXISTS cache (
                     key TEXT PRIMARY KEY,
@@ -53,18 +58,13 @@ class Cache:
         return None
 
     async def invalidate(self, key: str):
+        await self._ensure_table()
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("DELETE FROM cache WHERE key = ?", (key,))
             await db.commit()
 
-    async def invalidate_pattern(self, pattern: str):
-        async with aiosqlite.connect(self.db_path) as db:
-            await db.execute(
-                "DELETE FROM cache WHERE key LIKE ?", (f"%{pattern}%",)
-            )
-            await db.commit()
-
     async def clear(self):
+        await self._ensure_table()
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("DELETE FROM cache")
             await db.commit()

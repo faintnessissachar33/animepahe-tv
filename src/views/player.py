@@ -1,89 +1,116 @@
 import flet as ft
-from flet_video import Video, VideoConfiguration
-from core.theme import AppTheme
+import flet_video as fv
+from core.theme import AppColors
+from core.state import state
 from services.kwik_resolver import KwikResolver
 
 
-class PlayerView:
-    def __init__(self, app):
-        self.app = app
-        self.theme = AppTheme()
-        self.kwik = KwikResolver()
-        self._video: Video | None = None
-        self._status_text: ft.Text | None = None
+def build_player_view(
+    page_obj: ft.Page,
+    anime_session: str,
+    episode_session: str,
+    scraper,
+) -> ft.View:
+    kwik = KwikResolver()
+    video = fv.Video(
+        autoplay=True,
+        expand=True,
+        aspect_ratio=16 / 9,
+        show_controls=True,
+        wakelock=True,
+        filter_quality=ft.FilterQuality.MEDIUM,
+        pause_upon_entering_background_mode=True,
+        resume_upon_entering_foreground_mode=True,
+        on_error=lambda e: _on_error(e, page_obj),
+        on_ended=lambda e: _on_ended(page_obj),
+    )
 
-    def build(self) -> ft.View:
-        self._status_text = ft.Text("Loading...", color=self.theme.text_secondary)
-        self._video = Video(
-            autoplay=True,
-            aspect_ratio=16 / 9,
-            on_error=self._on_error,
-            on_ended=self._on_ended,
-        )
+    status_text = ft.Text(
+        "Resolving stream...",
+        size=14,
+        color=AppColors.DARK_TEXT_DIM,
+        text_align=ft.TextAlign.CENTER,
+    )
 
-        return ft.View(
-            bgcolor="#000000",
-            controls=[
-                ft.Container(
-                    expand=True,
-                    alignment=ft.alignment.center,
-                    content=ft.Column(
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        controls=[
-                            self._video,
-                            self._status_text,
-                        ],
-                    ),
-                ),
+    loading = ft.ProgressRing(width=20, height=20, color=AppColors.PRIMARY)
+
+    overlay = ft.Container(
+        expand=True,
+        bgcolor=ft.Colors.BLACK,
+        alignment=ft.Alignment(0, 0),
+        content=ft.Column(
+            [
+                status_text,
+                ft.Container(height=12),
+                loading,
             ],
-        )
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
+        ),
+    )
 
-    def load_sources(self):
-        anime = self.app.state.selected_anime.get()
-        episode = self.app.state.selected_episode.get()
-        if not anime or not episode:
-            self._status_text.value = "Error: No episode selected"
-            self.app.page.update()
-            return
+    back_btn = ft.Container(
+        left=12,
+        top=40,
+        content=ft.IconButton(
+            icon=ft.Icons.ARROW_BACK_IOS_NEW_ROUNDED,
+            icon_color=ft.Colors.WHITE,
+            icon_size=20,
+            bgcolor=ft.Colors.BLACK45,
+            on_click=lambda _: page_obj.page.views.pop() if len(page_obj.page.views) > 1 else None,
+        ),
+    )
 
-        sources = self.app.scraper.sources(anime.session, episode.session)
-        self.app.state.sources.set(sources)
-
-        if not sources:
-            self._status_text.value = "No sources found"
-            self.app.page.update()
-            return
-
-        self._status_text.value = "Resolving stream..."
-        self.app.page.update()
-
-        best = sources[0]
-        for s in sources:
-            if s.resolution > best.resolution:
-                best = s
-
-        self.app.state.selected_source.set(best)
-        m3u8 = self.kwik.resolve(best.url)
-
+    sources = scraper.sources(anime_session, episode_session)
+    if sources:
+        best = max(sources, key=lambda s: s.resolution)
+        m3u8 = kwik.resolve(best.url)
         if m3u8:
-            self.app.state.m3u8_url.set(m3u8)
-            self._video.source = m3u8
-            self._video.player_config = VideoConfiguration(
-                mpv_properties={
-                    "http-header-fields": f"Referer: {best.url}",
-                },
-            )
-            self._status_text.value = f"Playing {best.resolution}p"
+            video.playlist = [fv.VideoMedia(m3u8, http_headers={"Referer": best.url})]
+            video.autoplay = True
+            overlay.visible = False
         else:
-            self._status_text.value = "Failed to resolve stream"
+            status_text.value = "Failed to resolve stream"
+            loading.visible = False
+    else:
+        status_text.value = "No sources found"
+        loading.visible = False
 
-        self.app.page.update()
+    return ft.View(
+        route=f"/play?src={anime_session}|{episode_session}",
+        controls=[
+            ft.Stack(
+                [
+                    ft.Container(expand=True, bgcolor=ft.Colors.BLACK),
+                    video,
+                    overlay,
+                    back_btn,
+                ],
+                expand=True,
+            ),
+        ],
+        padding=0,
+    )
 
-    def _on_error(self, e):
-        self._status_text.value = f"Playback error: {e.data}"
-        self.app.page.update()
 
-    def _on_ended(self, e):
-        self._status_text.value = "Playback ended"
-        self.app.page.update()
+def _on_error(e, page_obj: ft.Page):
+    state.player_error = e.data
+    try:
+        page_obj.snack_bar = ft.SnackBar(
+            ft.Text(f"Playback error"), bgcolor=AppColors.ERROR,
+        )
+        page_obj.snack_bar.open = True
+        page_obj.update()
+    except Exception:
+        pass
+
+
+def _on_ended(page_obj: ft.Page):
+    try:
+        page_obj.snack_bar = ft.SnackBar(
+            ft.Text("Playback ended"), bgcolor=AppColors.SUCCESS,
+        )
+        page_obj.snack_bar.open = True
+        page_obj.update()
+    except Exception:
+        pass

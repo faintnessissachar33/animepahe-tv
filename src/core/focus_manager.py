@@ -4,44 +4,33 @@ import flet as ft
 class FocusManager:
     def __init__(self, page: ft.Page):
         self.page = page
-        self.focused_index = 0
-        self.focusable: list[ft.Control] = []
+        self._back_handler = None
+        page.on_keyboard_event = self._handle_keyboard
 
-    def register(self, controls: list[ft.Control]):
-        self.focusable = controls
-        if self.focusable:
-            self._apply_focus(self.focusable[0])
+    def set_back_handler(self, handler: callable):
+        self._back_handler = handler
 
-    def handle_key(self, e: ft.KeyboardEvent):
-        if e.key == "ArrowDown":
-            self._move_focus(1)
-        elif e.key == "ArrowUp":
-            self._move_focus(-1)
-        elif e.key == "ArrowRight":
-            self._move_focus(1)
-        elif e.key == "ArrowLeft":
-            self._move_focus(-1)
-        elif e.key == "Enter" or e.key == " ":
-            self._activate_focus()
+    def _handle_keyboard(self, e: ft.KeyboardEvent):
+        if e.key in ("Escape", "Go Back", "Browser Back", "Backspace"):
+            if self._back_handler:
+                self._back_handler()
 
-    def _move_focus(self, direction: int):
-        if not self.focusable:
-            return
-        self._remove_focus(self.focusable[self.focused_index])
-        self.focused_index = (self.focused_index + direction) % len(self.focusable)
-        self._apply_focus(self.focusable[self.focused_index])
-        self.page.update()
+    @staticmethod
+    def make_scroll_on_focus(scrollable: ft.ListView | ft.Column):
+        def _on_focus(e):
+            control_key = getattr(e.control, "key", None)
+            if control_key and hasattr(scrollable, "scroll_to"):
+                try:
+                    scrollable.scroll_to(key=control_key, duration=200)
+                except Exception:
+                    pass
+        return _on_focus
 
-    def _apply_focus(self, control: ft.Control):
-        control.scale = ft.transform.Scale(1.05)
-        control.opacity = 1.0
-
-    def _remove_focus(self, control: ft.Control):
-        control.scale = ft.transform.Scale(1.0)
-        control.opacity = 0.8
-
-    def _activate_focus(self):
-        if self.focusable and self.focusable[self.focused_index]:
-            control = self.focusable[self.focused_index]
-            if hasattr(control, "on_click") and control.on_click:
-                control.on_click(None)
+    @staticmethod
+    def focus_style(control: ft.Container, focused: bool, primary_color: str = "#E94560"):
+        if focused:
+            control.border = ft.Border.all(2.5, primary_color)
+            control.scale = 1.05
+        else:
+            control.border = ft.Border.all(0.5, ft.Colors.with_opacity(0.1, ft.Colors.ON_SURFACE))
+            control.scale = 1.0

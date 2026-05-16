@@ -1,24 +1,5 @@
-from dataclasses import dataclass, field
-from typing import Any, Callable, Generic, TypeVar
-
-T = TypeVar("T")
-
-
-class MutableState(Generic[T]):
-    def __init__(self, default: T):
-        self._value = default
-        self._listeners: list[Callable[[T], None]] = []
-
-    def get(self) -> T:
-        return self._value
-
-    def set(self, value: T):
-        self._value = value
-        for listener in self._listeners:
-            listener(value)
-
-    def listen(self, callback: Callable[[T], None]):
-        self._listeners.append(callback)
+import flet as ft
+from dataclasses import dataclass
 
 
 @dataclass
@@ -57,20 +38,21 @@ class Source:
     fansub: str
 
 
+@ft.observable
 class AppState:
+    is_loading: bool = False
+    search_query: str = ""
+    search_results: list[Anime] = []
+    search_has_more: bool = True
+    episodes: list[Episode] = []
+    episodes_has_more: bool = True
+    selected_source: Source | None = None
+    m3u8_url: str | None = None
+    player_error: str | None = None
+
     def __init__(self):
-        self.search_query = MutableState("")
-        self.search_results = MutableState[list[Anime]]([])
-        self.search_page = MutableState(1)
-        self.search_has_more = MutableState(True)
-        self.selected_anime = MutableState[Anime | None](None)
-        self.episodes = MutableState[list[Episode]]([])
-        self.episodes_page = MutableState(1)
-        self.episodes_has_more = MutableState(True)
-        self.selected_episode = MutableState[Episode | None](None)
-        self.sources = MutableState[list[Source]]([])
-        self.selected_source = MutableState[Source | None](None)
-        self.m3u8_url = MutableState[str | None](None)
-        self.player_status = MutableState("idle")
-        self.error = MutableState[str | None](None)
-        self.navigation_stack = MutableState[list[str]]([])
+        self.search_results = []
+        self.episodes = []
+
+
+state = AppState()
