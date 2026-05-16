@@ -7,9 +7,6 @@ from services.kwik_resolver import KwikResolver
 
 def build_player_view(
     page_obj: ft.Page,
-    anime_session: str,
-    episode_session: str,
-    scraper,
 ) -> ft.View:
     kwik = KwikResolver()
 
@@ -87,19 +84,17 @@ def build_player_view(
 
     async def resolve_and_play():
         try:
-            sources = scraper.sources(anime_session, episode_session)
-            if sources:
-                best = max(sources, key=lambda s: s.resolution)
-                m3u8 = kwik.resolve(best.url)
+            if state.selected_source:
+                m3u8 = kwik.resolve(state.selected_source.url)
                 if m3u8:
-                    video.playlist = [fv.VideoMedia(m3u8, http_headers={"Referer": best.url})]
+                    video.playlist = [fv.VideoMedia(m3u8, http_headers={"Referer": state.selected_source.url})]
                     video.autoplay = True
                     overlay.visible = False
                 else:
                     status_text.value = "Failed to resolve stream"
                     loading.visible = False
             else:
-                status_text.value = "No sources found"
+                status_text.value = "No source selected"
                 loading.visible = False
             page_obj.update()
         except Exception:

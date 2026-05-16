@@ -43,6 +43,10 @@ class AppColors:
             0.1, ft.Colors.WHITE if page.theme_mode == ft.ThemeMode.DARK else ft.Colors.BLACK
         )
 
+    @staticmethod
+    def get_surface_variant(page: ft.Page):
+        return AppColors.DARK_SURFACE_VARIANT if page.theme_mode == ft.ThemeMode.DARK else AppColors.LIGHT_SURFACE_VARIANT
+
 
 class AppTheme:
     @staticmethod

@@ -16,6 +16,19 @@ from views.anime_detail import build_anime_detail_view
 from views.player import build_player_view
 
 
+def _theme_button_style(page: ft.Page, is_primary: bool = False):
+    return ft.ButtonStyle(
+        bgcolor={
+            ft.ControlState.FOCUSED: AppColors.PRIMARY,
+            ft.ControlState.DEFAULT: AppColors.PRIMARY if is_primary else AppColors.get_surface_variant(page),
+        },
+        color={
+            ft.ControlState.FOCUSED: ft.Colors.WHITE,
+            ft.ControlState.DEFAULT: ft.Colors.WHITE if is_primary else ft.Colors.ON_SURFACE,
+        },
+    )
+
+
 def show_ktv_install_dialog(page: ft.Page):
     def open_store(e):
         page.run_task(page.launch_url, KTV_PLAY_STORE_URL)
@@ -25,21 +38,18 @@ def show_ktv_install_dialog(page: ft.Page):
 
     def dismiss(e):
         try:
-            page.close_dialog()
+            page.pop_dialog()
         except Exception:
             pass
 
     player_buttons = []
     for name in EXTERNAL_PLAYER_NAMES:
         player_buttons.append(
-            ft.ElevatedButton(
-                text=name,
+            ft.Button(
+                content=ft.Text(name),
                 icon=ft.Icons.PLAY_CIRCLE_ROUNDED,
-                on_click=open_store if name == "KTV Player" else open_store,
-                style=ft.ButtonStyle(
-                    bgcolor=AppColors.PRIMARY if name == "KTV Player" else ft.Colors.SURFACE_VARIANT,
-                    color=ft.Colors.WHITE if name == "KTV Player" else ft.Colors.ON_SURFACE,
-                ),
+                on_click=open_store,
+                style=_theme_button_style(page, is_primary=(name == "KTV Player")),
             )
         )
 
@@ -59,18 +69,17 @@ def show_ktv_install_dialog(page: ft.Page):
             tight=True,
         ),
         actions=[
-            ft.TextButton("Not now", on_click=dismiss),
-            ft.TextButton("Download from Uptodown", on_click=open_uptodown),
+            ft.Button(content=ft.Text("Not now"), on_click=dismiss),
+            ft.Button(content=ft.Text("Download from Uptodown"), on_click=open_uptodown),
         ],
         actions_alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
     )
 
-    page.open(dlg)
+    page.show_dialog(dlg)
 
 
 async def main(page: ft.Page):
     page.title = "AnimePahe TV"
-    # Remove favicon since user mentioned red button. Actually they said "use icon.png completely", so we set it properly if in assets.
     page.padding = 0
     page.spacing = 0
 
@@ -101,7 +110,6 @@ async def main(page: ft.Page):
     state.scraper = scraper
     state.cache = cache
 
-    # --- TV Navigation: Global Back/Escape handler ---
     def handle_global_back():
         if len(page.views) > 1:
             top_view = page.views[-1]
@@ -165,12 +173,10 @@ async def main(page: ft.Page):
         page.update()
 
     async def play_episode(anime_session: str, episode_session: str):
-        if USE_EXTERNAL_PLAYER:
-            await play_episode_external(anime_session, episode_session)
-        else:
-            await play_episode_internal(anime_session, episode_session)
+        page.snack_bar = ft.SnackBar(ft.Text("Fetching available qualities..."))
+        page.snack_bar.open = True
+        page.update()
 
-    async def play_episode_internal(anime_session: str, episode_session: str):
         sources = scraper.sources(anime_session, episode_session)
         if not sources:
             page.snack_bar = ft.SnackBar(ft.Text("No sources found."), bgcolor=AppColors.ERROR)
@@ -178,24 +184,57 @@ async def main(page: ft.Page):
             page.update()
             return
 
+        sources.sort(key=lambda s: s.resolution, reverse=True)
+
+        def on_select(e, src):
+            try:
+                page.pop_dialog()
+            except Exception:
+                pass
+
+            state.selected_source = src
+
+            if USE_EXTERNAL_PLAYER:
+                page.run_task(play_episode_external, anime_session, episode_session)
+            else:
+                page.run_task(play_episode_internal, anime_session, episode_session)
+
+        buttons = []
+        for src in sources:
+            audio_label = "DUB (ENG)" if "eng" in src.audio.lower() else f"SUB ({src.audio.upper()})"
+            label = f"{src.resolution}p - {audio_label}"
+            if src.fansub:
+                label += f" ({src.fansub})"
+
+            buttons.append(
+                ft.Button(
+                    content=ft.Text(label),
+                    on_click=lambda e, s=src: on_select(e, s),
+                    style=_theme_button_style(page),
+                )
+            )
+
+        dlg = ft.AlertDialog(
+            title=ft.Text("Select Quality & Audio", weight=ft.FontWeight.BOLD),
+            content=ft.ListView(controls=buttons, spacing=10),
+            actions=[ft.Button(content=ft.Text("Cancel"), on_click=lambda e: page.pop_dialog())],
+            modal=True,
+        )
+        page.show_dialog(dlg)
+
+    async def play_episode_internal(anime_session: str, episode_session: str):
         state.current_anime_session = anime_session
         state.current_episode_session = episode_session
         page.snack_bar = ft.SnackBar(ft.Text("Resolving stream..."), bgcolor=AppColors.SUCCESS)
         page.snack_bar.open = True
         page.update()
-
         await navigate("/play")
 
     async def play_episode_external(anime_session: str, episode_session: str):
-        sources = scraper.sources(anime_session, episode_session)
-        if not sources:
-            page.snack_bar = ft.SnackBar(ft.Text("No sources found."), bgcolor=AppColors.ERROR)
-            page.snack_bar.open = True
-            page.update()
+        if not state.selected_source:
             return
 
-        best = max(sources, key=lambda s: s.resolution)
-        m3u8_url = best.url
+        m3u8_url = state.selected_source.url
 
         encoded_m3u8 = base64.urlsafe_b64encode(m3u8_url.encode()).decode()
         deep_link = f"{KTV_DEEP_LINK_SCHEME}{encoded_m3u8}"
@@ -262,9 +301,6 @@ async def main(page: ft.Page):
                 page.views.append(
                     build_player_view(
                         page_obj=page,
-                        anime_session=state.current_anime_session,
-                        episode_session=state.current_episode_session,
-                        scraper=scraper,
                     )
                 )
             else:
