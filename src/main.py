@@ -187,11 +187,6 @@ async def main(page: ft.Page):
         sources.sort(key=lambda s: s.resolution, reverse=True)
 
         def on_select(e, src):
-            try:
-                page.pop_dialog()
-            except Exception:
-                pass
-
             state.selected_source = src
 
             if USE_EXTERNAL_PLAYER:
@@ -297,6 +292,10 @@ async def main(page: ft.Page):
                 page.run_task(load_episodes, session, 1)
 
         elif parsed.path == "/play":
+            try:
+                page.pop_dialog()
+            except Exception:
+                pass
             if state.current_anime_session and state.current_episode_session:
                 page.views.append(
                     build_player_view(
