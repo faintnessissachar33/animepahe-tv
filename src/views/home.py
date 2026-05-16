@@ -16,7 +16,7 @@ def build_home_view(
     latest_grid = ft.ResponsiveRow(
         spacing=16,
         run_spacing=16,
-        padding=24,
+        margin=24,
     )
 
     def on_hover_card(e, container):
