@@ -124,7 +124,6 @@ def build_player_view(
 
 
 def _on_error(e, page_obj: ft.Page):
-    state.player_error = e.data
     try:
         page_obj.snack_bar = ft.SnackBar(
             ft.Text("Playback error", color=ft.Colors.WHITE),

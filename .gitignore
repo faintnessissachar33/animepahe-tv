@@ -16,3 +16,5 @@ htmlcov/
 /data/
 /temp/
 scratch/
+storage/
+*.pyc

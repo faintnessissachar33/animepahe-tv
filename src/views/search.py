@@ -178,13 +178,19 @@ def build_search_view(
         if state.is_loading:
             loading_indicator.visible = True
             empty_state.visible = False
-        elif not state.search_results and state.search_query:
+            results_grid.visible = False
+        elif not state.search_results:
             loading_indicator.visible = False
             empty_state.visible = True
-            empty_state.controls[1].value = f"No results found for '{state.search_query}'"
+            results_grid.visible = False
+            if state.search_query:
+                empty_state.content.controls[1].value = f"No results found for '{state.search_query}'"
+            else:
+                empty_state.content.controls[1].value = "Search for an anime to get started."
         else:
             loading_indicator.visible = False
             empty_state.visible = False
+            results_grid.visible = True
             for i, anime in enumerate(state.search_results):
                 results_grid.controls.append(_build_card(anime, i))
         page_obj.update()
@@ -192,20 +198,22 @@ def build_search_view(
     page_obj.refresh_search_results = refresh_results
 
     loading_indicator = ft.Container(
-        expand=True,
         alignment=ft.Alignment.CENTER,
         content=ft.ProgressRing(color=AppColors.PRIMARY, stroke_width=4),
         visible=False,
     )
 
-    empty_state = ft.Column(
-        [
-            ft.Icon(ft.Icons.SEARCH_OFF_ROUNDED, size=64, color=ft.Colors.ON_SURFACE_VARIANT),
-            ft.Text("Search for an anime to get started.", size=16, color=ft.Colors.ON_SURFACE_VARIANT),
-        ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        alignment=ft.MainAxisAlignment.CENTER,
+    empty_state = ft.Container(
         expand=True,
+        alignment=ft.Alignment.CENTER,
+        content=ft.Column(
+            [
+                ft.Icon(ft.Icons.SEARCH_OFF_ROUNDED, size=64, color=ft.Colors.ON_SURFACE_VARIANT),
+                ft.Text("Search for an anime to get started.", size=16, color=ft.Colors.ON_SURFACE_VARIANT),
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=16,
+        ),
     )
 
     back_btn = ft.Container(
@@ -252,7 +260,10 @@ def build_search_view(
     grid_area = ft.Container(
         expand=True,
         padding=ft.Padding.only(left=24, right=24, bottom=24),
-        content=ft.Stack([results_grid, loading_indicator, empty_state]),
+        content=ft.Stack(
+            [results_grid, loading_indicator, empty_state],
+            expand=True,
+        ),
     )
 
     scroll_content = ft.Column(

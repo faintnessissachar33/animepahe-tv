@@ -8,7 +8,6 @@ from core.state import state
 from core.config import USE_EXTERNAL_PLAYER, KTV_PLAY_STORE_URL, KTV_UPTODOWN_URL, KTV_DEEP_LINK_SCHEME, EXTERNAL_PLAYER_NAMES
 from core.focus_manager import FocusManager
 from services.animepahe import AnimePaheScraper
-from services.cache import Cache
 from views.splash import build_splash_view
 from views.home import build_home_view
 from views.search import build_search_view
@@ -103,12 +102,10 @@ async def main(page: ft.Page):
     page.theme_mode = ft.ThemeMode.SYSTEM
 
     scraper = AnimePaheScraper()
-    cache = Cache()
 
     focus_manager = FocusManager(page)
 
     state.scraper = scraper
-    state.cache = cache
 
     def handle_global_back():
         if len(page.views) > 1:

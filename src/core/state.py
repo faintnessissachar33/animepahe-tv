@@ -61,8 +61,6 @@ class AppState:
     episodes_has_more: bool = True
     episodes_page: int = 1
     selected_source: Source | None = None
-    m3u8_url: str | None = None
-    player_error: str | None = None
     current_anime_session: str = ""
     current_episode_session: str = ""
 
